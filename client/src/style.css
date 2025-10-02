@@ -10,8 +10,6 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-
-  /* pointer-events: none; */
 }
 
 canvas {
@@ -42,7 +40,6 @@ button {
   all: unset;
   text-shadow: 0 0 5px #f0f0ffff;
   font-size: 1.3em;
-  /* font-size: 2em; */
 }
 
 button:hover {
@@ -68,8 +65,7 @@ h2 {
   display: none;
 }
 
-#menu #play {
-}
+#menu #play {}
 
 #timer {
   display: none;

@@ -9,7 +9,6 @@ export default function serverConnect(game: Game) {
 
   const protocol = location.protocol.startsWith("https") ? "wss" : "ws";
   const wsUri = `${protocol}://${location.hostname}:8000/ws`;
-  // const wsUri = `${protocol}://127.0.0.1:8000/ws`;
 
   socket = new WebSocket(wsUri);
 
@@ -24,7 +23,7 @@ export default function serverConnect(game: Game) {
     if (!socket) {
       return;
     }
-    // socket.send("/list");
+
     socket.send(
       `/info ${game.ducks[0].duckName} ${game.ducks[0].variety} ${game.ducks[0].color}`,
     );
@@ -90,7 +89,6 @@ export default function serverConnect(game: Game) {
         if (data.length > 3) {
           game.gameMode = GameMode.SPECTATOR;
           game.ducks[0].visible = false;
-          // console.log("ha");
         }
 
         document.getElementById("timer")!.innerText = "02:00";

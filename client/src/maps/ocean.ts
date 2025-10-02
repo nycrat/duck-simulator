@@ -4,8 +4,6 @@ import * as THREE from "three";
 import Pond from "../objects/pond";
 
 export default function initOceanMap(game: Game) {
-  // game.mapSize = 11.5;
-
   const sky = new Sky();
   sky.scale.setScalar(10000);
   const skyUniforms = sky.material.uniforms;

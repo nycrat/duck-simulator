@@ -126,18 +126,5 @@ export function initializeMenu(game: Game) {
         color,
       );
       game.scene.add(game.ducks[0]);
-
-      // @ts-ignore
-      // document.getElementById("color-input")!.value = Math.random() * 0xffffff;
-
-      // updateColor();
     });
-
-  // document.getElementById("lobby-duck-list")?.appendChild()
-
-  // const canvas = game.renderer.domElement;
-  // document.addEventListener("click", async () => {
-  //   console.log("FULLSCREEN");
-  //   await canvas.requestFullscreen();
-  // });
 }
