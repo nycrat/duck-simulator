@@ -140,8 +140,10 @@ export default class Game {
       // @ts-ignore
       const zeroPad = (num, places) => String(num).padStart(places, "0");
 
-      document.getElementById("timer")!.innerText =
-        `${zeroPad(Math.trunc(curTime / 60), 2)}:${zeroPad(curTime % 60, 2)}`;
+      document.getElementById("timer")!.innerText = `${zeroPad(
+        Math.trunc(curTime / 60),
+        2,
+      )}:${zeroPad(curTime % 60, 2)}`;
 
       document.getElementById("timer")!.innerText +=
         self.gameMode === GameMode.SPECTATOR ? " (Spectating)" : "";
