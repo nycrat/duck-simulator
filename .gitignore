@@ -1,1 +1,13 @@
 .DS_Store
+
+# client
+
+node_modules/
+dist/
+
+# server
+
+server/debug/
+server/target/
+
+.env
