@@ -40,7 +40,7 @@ async fn main() -> std::io::Result<()> {
         false => std::env::var("HOST").unwrap(),
     };
 
-    let port: i32 = std::env::var("PORT").unwrap().parse().unwrap();
+    let port: i32 = 4421;
 
     // TODO update to wss when it supports https
     log::info!("starting game server at ws://{}:{}/ws", host, port);

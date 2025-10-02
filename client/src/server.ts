@@ -8,7 +8,7 @@ export default function serverConnect(game: Game) {
   var socket: WebSocket | null = null;
 
   const protocol = location.protocol.startsWith("https") ? "wss" : "ws";
-  const wsUri = `${protocol}://${location.hostname}:8000/ws`;
+  const wsUri = `${protocol}://${location.hostname}:4421/ws`;
 
   socket = new WebSocket(wsUri);
 

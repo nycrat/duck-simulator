@@ -1,5 +1,5 @@
 const protocol = location.protocol.startsWith("https") ? "wss" : "ws";
-const wsUri = `${protocol}://${location.hostname}:8000/ws`;
+const wsUri = `${protocol}://${location.hostname}:4421/ws`;
 
 let socket = new WebSocket(wsUri);
 
