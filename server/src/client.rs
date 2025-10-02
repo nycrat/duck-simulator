@@ -128,15 +128,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
                                 fut::ready(())
                             })
                             .wait(context),
-                        "/join" => {
-                            if v.len() == 2 {
-                                // name duck color
-                                log::info!("JOINED");
-                                self.server_address.do_send(server::Join {
-                                    id: self.id,
-                                    name: v[1].to_owned(),
-                                });
-                            }
+                        "/join_lobby" => {
+                            panic!("joining different lobbies is not implemented yet")
                         }
                         "/info" => {
                             let duck_info: Vec<&str> = v[1].splitn(3, " ").collect();

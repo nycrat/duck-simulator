@@ -12,8 +12,8 @@ export default function serverConnect(game: Game) {
 
   socket = new WebSocket(wsUri);
 
-  socket.addEventListener("error", (_event) => {
-    console.error("CANT CONNECT");
+  socket.addEventListener("error", (event) => {
+    console.error("Can't connect to server", event);
     game.gameMode = GameMode.OFFLINE;
   });
 
@@ -86,10 +86,13 @@ export default function serverConnect(game: Game) {
         game.gameDuration = parseInt(data[2]);
         game.gameMode = GameMode.ONLINE;
 
-        if (data.length > 3) {
-          game.gameMode = GameMode.SPECTATOR;
-          game.ducks[0].visible = false;
-        }
+        document.getElementById("timer")!.innerText = "02:00";
+      } else if (data[0] === "/spectate_game") {
+        game.startTime = parseInt(data[1]);
+        game.gameDuration = parseInt(data[2]);
+
+        game.gameMode = GameMode.SPECTATOR;
+        game.ducks[0].visible = false;
 
         document.getElementById("timer")!.innerText = "02:00";
       } else if (data[0] === "/game_end") {

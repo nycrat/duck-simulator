@@ -43,15 +43,13 @@ pub struct ClientMessage {
     pub lobby: String,
 }
 
+#[derive(Message)]
+#[rtype(result = "Vec<String>")]
 pub struct ListLobbies;
-
-impl actix::Message for ListLobbies {
-    type Result = Vec<String>;
-}
 
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct Join {
+pub struct JoinLobby {
     pub id: u32,
     pub name: String,
 }
@@ -297,6 +295,7 @@ impl GameServer {
         }
     }
 
+    /// Broadcasts message to all clients connected to lobby (except skip_id)
     fn send_binary_message_to_lobby(&self, lobby: &str, message: Vec<u8>, skip_id: u32) {
         if let Some(lobby) = self.lobbies.get(lobby) {
             for (id, _) in &lobby.duck_map {
@@ -328,13 +327,14 @@ impl Actor for GameServer {
 impl Handler<Connect> for GameServer {
     type Result = u32;
 
-    fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
+    fn handle(&mut self, connect_message: Connect, _: &mut Context<Self>) -> Self::Result {
+        // TODO use better id generation
         let id = self.rng.gen::<u32>();
 
         if self.lobbies.get("main").unwrap().start_time.is_some() {
-            msg.recipient.do_send(GameMessage(
+            connect_message.recipient.do_send(GameMessage(
                 Some(format!(
-                    "/start_game\n{}\n{}\nTODOMAKETHISBETTER",
+                    "/spectate_game\n{}\n{}",
                     self.lobbies.get("main").unwrap().game_duration.as_secs(),
                     self.lobbies
                         .get("main")
@@ -348,7 +348,8 @@ impl Handler<Connect> for GameServer {
                 None,
             ));
 
-            msg.recipient
+            connect_message
+                .recipient
                 .do_send(GameMessage(Some(format!("/id\n{id}").to_owned()), None));
             {
                 let other_infos: String = self
@@ -360,13 +361,13 @@ impl Handler<Connect> for GameServer {
                     .map(|(id, info)| format!("\n{} {} {} {}", id, info.0, info.1, info.2))
                     .collect();
 
-                msg.recipient.do_send(GameMessage(
+                connect_message.recipient.do_send(GameMessage(
                     Some(format!("/join{other_infos}").to_owned()),
                     None,
                 ));
             }
 
-            self.clients.insert(id, msg.recipient);
+            self.clients.insert(id, connect_message.recipient);
             self.lobbies
                 .get_mut("main")
                 .unwrap()
@@ -376,7 +377,8 @@ impl Handler<Connect> for GameServer {
         }
 
         // notify of existing ducks in lobby
-        msg.recipient
+        connect_message
+            .recipient
             .do_send(GameMessage(Some(format!("/id\n{id}").to_owned()), None));
         {
             let other_infos: String = self
@@ -388,13 +390,13 @@ impl Handler<Connect> for GameServer {
                 .map(|(id, info)| format!("\n{} {} {} {}", id, info.0, info.1, info.2))
                 .collect();
 
-            msg.recipient.do_send(GameMessage(
+            connect_message.recipient.do_send(GameMessage(
                 Some(format!("/join{other_infos}").to_owned()),
                 None,
             ));
         }
 
-        self.clients.insert(id, msg.recipient);
+        self.clients.insert(id, connect_message.recipient);
         self.ducks.insert(
             id,
             Duck {
@@ -409,15 +411,21 @@ impl Handler<Connect> for GameServer {
         // notify all users in same lobby
         self.send_message_to_lobby(
             "main",
-            &format!("/join\n{id} {} {} {}", msg.name, msg.variety, msg.color),
+            &format!(
+                "/join\n{id} {} {} {}",
+                connect_message.name, connect_message.variety, connect_message.color
+            ),
             id,
         );
 
-        self.lobbies
-            .get_mut("main")
-            .unwrap()
-            .duck_map
-            .insert(id, (msg.name, msg.variety, msg.color));
+        self.lobbies.get_mut("main").unwrap().duck_map.insert(
+            id,
+            (
+                connect_message.name,
+                connect_message.variety,
+                connect_message.color,
+            ),
+        );
 
         // send id back
         id
@@ -466,28 +474,11 @@ impl Handler<ListLobbies> for GameServer {
     }
 }
 
-impl Handler<Join> for GameServer {
+impl Handler<JoinLobby> for GameServer {
     type Result = ();
 
-    fn handle(&mut self, _msg: Join, _: &mut Context<Self>) {
+    fn handle(&mut self, _msg: JoinLobby, _: &mut Context<Self>) {
         panic!("NOT IMPLEMENTED YET");
-        // let Join { id, name } = msg;
-        // let mut lobbies = Vec::new();
-        //
-        // // remove session from all lobbies
-        // for (n, lobby) in &mut self.lobbies {
-        //     if lobby.duck_ids.remove(&id).is_some() {
-        //         lobbies.push(n.to_owned());
-        //     }
-        // }
-        // // send message to other users
-        // for lobby in lobbies {
-        //     self.send_message(&lobby, "Someone disconnected", 0);
-        // }
-        //
-        // self.lobbies.get_mut(&name).unwrap().duck_ids.insert(id);
-        //
-        // self.send_message(&name, "Someone connected", id);
     }
 }
 
