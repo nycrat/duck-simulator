@@ -1,7 +1,7 @@
 use crate::duck::Duck;
 use crate::lobby;
 use crate::protos::protos::protos;
-use protobuf::Message as OtherMessage;
+use protobuf::Message;
 use std::{
     collections::HashMap,
     f32::consts::PI,
@@ -9,21 +9,21 @@ use std::{
 };
 
 const UPDATE_SYNC_INTERVAL: Duration = Duration::from_millis(50);
-const BREAD_PER_SECOND: f32 = 3.0;
-const MAX_BREAD: usize = 500;
-// const GAME_DURATION: Duration = Duration::from_secs(120);
+const BREAD_SPAWN_PER_SECOND: f32 = 3.0;
+const BREAD_LIMIT: usize = 500;
 
 use actix::prelude::*;
 use rand::{rngs::ThreadRng, Rng};
 
+// TODO refactor game message as enum cause it makes more sense
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct MessageWoah(pub Option<String>, pub Option<Vec<u8>>);
+pub struct GameMessage(pub Option<String>, pub Option<Vec<u8>>);
 
 #[derive(Message)]
 #[rtype(u32)]
 pub struct Connect {
-    pub addr: Recipient<MessageWoah>,
+    pub recipient: Recipient<GameMessage>,
     pub name: String,
     pub variety: String,
     pub color: String,
@@ -39,7 +39,7 @@ pub struct Disconnect {
 #[rtype(result = "()")]
 pub struct ClientMessage {
     pub id: u32,
-    pub msg: String,
+    pub message: String,
     pub lobby: String,
 }
 
@@ -65,14 +65,14 @@ pub struct Update {
 
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct StartGame {
+pub struct StartLobby {
     pub lobby: String,
     pub game_duration: u64,
 }
 
 #[derive(Debug)]
 pub struct GameServer {
-    clients: HashMap<u32, Recipient<MessageWoah>>,
+    clients: HashMap<u32, Recipient<GameMessage>>,
     ducks: HashMap<u32, Duck>,
     lobbies: HashMap<String, lobby::Lobby>,
     rng: ThreadRng,
@@ -80,7 +80,8 @@ pub struct GameServer {
 
 impl GameServer {
     pub fn new() -> GameServer {
-        // default lobby
+        // NOTE default lobby is "main"
+        // TODO support more than one lobby and no default lobby maybe
         let mut lobbies = HashMap::new();
         lobbies.insert("main".to_owned(), lobby::Lobby::new());
 
@@ -93,16 +94,16 @@ impl GameServer {
     }
 
     fn update_sync(&mut self, ctx: &mut Context<Self>) {
-        ctx.run_interval(UPDATE_SYNC_INTERVAL, |act, _ctx| {
-            let lobbies: Vec<String> = act.lobbies.keys().map(|x| x.to_owned()).collect();
+        ctx.run_interval(UPDATE_SYNC_INTERVAL, |server_actor, _context| {
+            let lobbies: Vec<String> = server_actor.lobbies.keys().map(|x| x.to_owned()).collect();
             let mut resets: Vec<String> = vec![];
 
             for lobby_name in &lobbies {
-                if let Some(lobby) = act.lobbies.get_mut(lobby_name) {
+                if let Some(lobby) = server_actor.lobbies.get_mut(lobby_name) {
                     if lobby.start_time.is_none() {
                         // TODO REFACTOR THIS BETTER
                         let mut out_msg = protos::UpdateSync::new();
-                        out_msg.ducks = act
+                        out_msg.ducks = server_actor
                             .ducks
                             .iter()
                             .map(|(id, state)| {
@@ -111,29 +112,36 @@ impl GameServer {
                                 duck.x = state.x;
                                 duck.y = state.y;
                                 duck.z = state.z;
-                                duck.rotation = state.rotation;
+                                duck.rotation = state.rotation_radians;
                                 duck.score = state.score;
                                 duck
                             })
                             .collect();
-                        act.send_message_binary(lobby_name, out_msg.write_to_bytes().unwrap(), 0);
+                        server_actor.send_binary_message_to_lobby(
+                            lobby_name,
+                            out_msg.write_to_bytes().unwrap(),
+                            0,
+                        );
                         continue;
                     }
 
-                    let delta_time = lobby.now.elapsed().unwrap().as_secs_f32();
-                    lobby.now = std::time::SystemTime::now();
+                    let delta_time = lobby.current_time.elapsed().unwrap().as_secs_f32();
+                    lobby.current_time = std::time::SystemTime::now();
 
-                    let game_over = lobby.now.duration_since(lobby.start_time.unwrap()).unwrap()
+                    let game_over = lobby
+                        .current_time
+                        .duration_since(lobby.start_time.unwrap())
+                        .unwrap()
                         >= lobby.game_duration;
 
                     if game_over {
                         lobby.start_time = None;
                         resets.push(lobby_name.to_owned());
 
-                        let mut highest_scores = vec![(0, 0); 3.min(lobby.duck_ids.len())];
+                        let mut highest_scores = vec![(0, 0); 3.min(lobby.duck_map.len())];
 
-                        for (id, _) in &lobby.duck_ids {
-                            let duck = act.ducks.get_mut(id).unwrap();
+                        for (id, _) in &lobby.duck_map {
+                            let duck = server_actor.ducks.get_mut(id).unwrap();
                             for i in 0..highest_scores.len() {
                                 if duck.score >= highest_scores[i].0 {
                                     highest_scores.insert(i, (duck.score, *id));
@@ -144,7 +152,7 @@ impl GameServer {
                             duck.x = 0.0;
                             duck.y = 0.0;
                             duck.z = 4.0;
-                            duck.rotation = 0.0;
+                            duck.rotation_radians = 0.0;
                         }
 
                         for i in 0..highest_scores.len() {
@@ -153,18 +161,18 @@ impl GameServer {
                                 println!("WHYY");
                                 continue;
                             }
-                            let duck = act.ducks.get_mut(&id).unwrap();
+                            let duck = server_actor.ducks.get_mut(&id).unwrap();
                             println!("{}: {id}", highest_scores[i].0);
                             duck.x = -1.25 + i as f32 * 1.25;
                             duck.y = 0.0;
                             duck.z = -0.5;
-                            duck.rotation = 0.0;
+                            duck.rotation_radians = 0.0;
                         }
 
                         println!("ENDED GAME FOR LOBBY {}", lobby_name);
                     } else {
                         // UPDATE BREAD
-                        for (_, y, _) in &mut lobby.bread {
+                        for (_, y, _) in &mut lobby.bread_list {
                             let gravity = -5.0;
                             // sqrt(v^2 - 2as) = u
                             let velocity = -f32::sqrt(f32::abs(2.0 * gravity * (10.0 - *y)));
@@ -173,16 +181,16 @@ impl GameServer {
                         }
 
                         // INTERSECTIONS
-                        for (id, _) in &lobby.duck_ids {
-                            let duck = act.ducks.get_mut(id).unwrap();
+                        for (id, _) in &lobby.duck_map {
+                            let duck = server_actor.ducks.get_mut(id).unwrap();
                             let duck_pos = &(duck.x, duck.y, duck.z);
 
                             let duck_size = &(0.5, 0.5, 0.5);
                             let bread_size = &(0.2, 0.2, 0.2);
 
                             let mut i = 0;
-                            while i < lobby.bread.len() {
-                                let bread_pos = lobby.bread.get(i).unwrap();
+                            while i < lobby.bread_list.len() {
+                                let bread_pos = lobby.bread_list.get(i).unwrap();
 
                                 type Vec3 = (f32, f32, f32);
                                 fn intersect(
@@ -200,7 +208,7 @@ impl GameServer {
                                 }
 
                                 if intersect(duck_pos, bread_pos, duck_size, bread_size) {
-                                    lobby.bread.swap_remove(i);
+                                    lobby.bread_list.swap_remove(i);
                                     duck.score += 1;
                                 } else {
                                     i += 1;
@@ -216,7 +224,7 @@ impl GameServer {
                     }
 
                     let mut out_msg = protos::UpdateSync::new();
-                    out_msg.ducks = act
+                    out_msg.ducks = server_actor
                         .ducks
                         .iter()
                         .map(|(id, state)| {
@@ -225,20 +233,20 @@ impl GameServer {
                             duck.x = state.x;
                             duck.y = state.y;
                             duck.z = state.z;
-                            duck.rotation = state.rotation;
+                            duck.rotation = state.rotation_radians;
                             duck.score = state.score;
                             duck
                         })
                         .collect();
 
-                    if act.rng.gen_range(0.0..=1.0)
-                        <= (BREAD_PER_SECOND * UPDATE_SYNC_INTERVAL.as_secs_f32())
-                        && lobby.bread.len() < MAX_BREAD
+                    if server_actor.rng.gen_range(0.0..=1.0)
+                        <= (BREAD_SPAWN_PER_SECOND * UPDATE_SYNC_INTERVAL.as_secs_f32())
+                        && lobby.bread_list.len() < BREAD_LIMIT
                     {
                         let y = 10.0;
 
-                        let theta = act.rng.gen_range(0.0..(PI * 2.0));
-                        let r = act.rng.gen_range(0.0..11.5);
+                        let theta = server_actor.rng.gen_range(0.0..(PI * 2.0));
+                        let r = server_actor.rng.gen_range(0.0..11.5);
 
                         let x = f32::sin(theta) * r;
                         let z = f32::cos(theta) * r;
@@ -247,55 +255,61 @@ impl GameServer {
                         out_msg.bread_y = Some(y);
                         out_msg.bread_z = Some(z);
 
-                        lobby.bread.push((x, y, z));
+                        lobby.bread_list.push((x, y, z));
                     }
 
                     // println!("BINARY: {:?}", out_msg.write_to_bytes().unwrap().size());
-                    act.send_message_binary(lobby_name, out_msg.write_to_bytes().unwrap(), 0);
+                    server_actor.send_binary_message_to_lobby(
+                        lobby_name,
+                        out_msg.write_to_bytes().unwrap(),
+                        0,
+                    );
                     if game_over {
-                        act.send_message(&lobby_name, "/game_end", 0);
+                        server_actor.send_message_to_lobby(&lobby_name, "/game_end", 0);
                     }
                 }
             }
             for reset in &resets {
-                act.lobbies.remove(reset);
-                act.lobbies.insert(reset.to_owned(), lobby::Lobby::new());
+                server_actor.lobbies.remove(reset);
+                server_actor
+                    .lobbies
+                    .insert(reset.to_owned(), lobby::Lobby::new());
             }
         });
     }
 
-    fn send_message(&self, lobby: &str, message: &str, skip_id: u32) {
+    fn send_message_to_lobby(&self, lobby: &str, message: &str, skip_id: u32) {
         if let Some(lobby) = self.lobbies.get(lobby) {
-            for (id, _) in &lobby.duck_ids {
+            for (id, _) in &lobby.duck_map {
                 if *id != skip_id {
                     if let Some(addr) = self.clients.get(&id) {
-                        addr.do_send(MessageWoah(Some(message.to_owned()), None));
+                        addr.do_send(GameMessage(Some(message.to_owned()), None));
                     }
                 }
             }
             for id in &lobby.spectator_ids {
                 if *id != skip_id {
                     if let Some(addr) = self.clients.get(&id) {
-                        addr.do_send(MessageWoah(Some(message.to_owned()), None));
+                        addr.do_send(GameMessage(Some(message.to_owned()), None));
                     }
                 }
             }
         }
     }
 
-    fn send_message_binary(&self, lobby: &str, message: Vec<u8>, skip_id: u32) {
+    fn send_binary_message_to_lobby(&self, lobby: &str, message: Vec<u8>, skip_id: u32) {
         if let Some(lobby) = self.lobbies.get(lobby) {
-            for (id, _) in &lobby.duck_ids {
+            for (id, _) in &lobby.duck_map {
                 if *id != skip_id {
                     if let Some(addr) = self.clients.get(&id) {
-                        addr.do_send(MessageWoah(None, Some(message.clone())));
+                        addr.do_send(GameMessage(None, Some(message.clone())));
                     }
                 }
             }
             for id in &lobby.spectator_ids {
                 if *id != skip_id {
                     if let Some(addr) = self.clients.get(&id) {
-                        addr.do_send(MessageWoah(None, Some(message.clone())));
+                        addr.do_send(GameMessage(None, Some(message.clone())));
                     }
                 }
             }
@@ -318,7 +332,7 @@ impl Handler<Connect> for GameServer {
         let id = self.rng.gen::<u32>();
 
         if self.lobbies.get("main").unwrap().start_time.is_some() {
-            msg.addr.do_send(MessageWoah(
+            msg.recipient.do_send(GameMessage(
                 Some(format!(
                     "/start_game\n{}\n{}\nTODOMAKETHISBETTER",
                     self.lobbies.get("main").unwrap().game_duration.as_secs(),
@@ -334,25 +348,25 @@ impl Handler<Connect> for GameServer {
                 None,
             ));
 
-            msg.addr
-                .do_send(MessageWoah(Some(format!("/id\n{id}").to_owned()), None));
+            msg.recipient
+                .do_send(GameMessage(Some(format!("/id\n{id}").to_owned()), None));
             {
                 let other_infos: String = self
                     .lobbies
                     .get("main")
                     .unwrap()
-                    .duck_ids
+                    .duck_map
                     .iter()
                     .map(|(id, info)| format!("\n{} {} {} {}", id, info.0, info.1, info.2))
                     .collect();
 
-                msg.addr.do_send(MessageWoah(
+                msg.recipient.do_send(GameMessage(
                     Some(format!("/join{other_infos}").to_owned()),
                     None,
                 ));
             }
 
-            self.clients.insert(id, msg.addr);
+            self.clients.insert(id, msg.recipient);
             self.lobbies
                 .get_mut("main")
                 .unwrap()
@@ -362,38 +376,38 @@ impl Handler<Connect> for GameServer {
         }
 
         // notify of existing ducks in lobby
-        msg.addr
-            .do_send(MessageWoah(Some(format!("/id\n{id}").to_owned()), None));
+        msg.recipient
+            .do_send(GameMessage(Some(format!("/id\n{id}").to_owned()), None));
         {
             let other_infos: String = self
                 .lobbies
                 .get("main")
                 .unwrap()
-                .duck_ids
+                .duck_map
                 .iter()
                 .map(|(id, info)| format!("\n{} {} {} {}", id, info.0, info.1, info.2))
                 .collect();
 
-            msg.addr.do_send(MessageWoah(
+            msg.recipient.do_send(GameMessage(
                 Some(format!("/join{other_infos}").to_owned()),
                 None,
             ));
         }
 
-        self.clients.insert(id, msg.addr);
+        self.clients.insert(id, msg.recipient);
         self.ducks.insert(
             id,
             Duck {
                 x: 0.0,
                 y: 0.0,
                 z: 0.0,
-                rotation: 0.0,
+                rotation_radians: 0.0,
                 score: 0,
             },
         );
 
         // notify all users in same lobby
-        self.send_message(
+        self.send_message_to_lobby(
             "main",
             &format!("/join\n{id} {} {} {}", msg.name, msg.variety, msg.color),
             id,
@@ -402,7 +416,7 @@ impl Handler<Connect> for GameServer {
         self.lobbies
             .get_mut("main")
             .unwrap()
-            .duck_ids
+            .duck_map
             .insert(id, (msg.name, msg.variety, msg.color));
 
         // send id back
@@ -420,7 +434,7 @@ impl Handler<Disconnect> for GameServer {
         if self.clients.remove(&msg.id).is_some() || self.ducks.remove(&msg.id).is_some() {
             // remove session from all lobbies
             for (name, lobby) in &mut self.lobbies {
-                if lobby.duck_ids.remove(&msg.id).is_some() {
+                if lobby.duck_map.remove(&msg.id).is_some() {
                     lobbies.push(name.to_owned());
                 }
                 lobby.spectator_ids.remove(&msg.id);
@@ -429,7 +443,7 @@ impl Handler<Disconnect> for GameServer {
 
         // send message to other users
         for lobby in lobbies {
-            self.send_message(&lobby, &format!("/disconnect\n{}", msg.id), 0);
+            self.send_message_to_lobby(&lobby, &format!("/disconnect\n{}", msg.id), 0);
         }
     }
 }
@@ -438,7 +452,7 @@ impl Handler<ClientMessage> for GameServer {
     type Result = ();
 
     fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) {
-        self.send_message(&msg.lobby, msg.msg.as_str(), msg.id);
+        self.send_message_to_lobby(&msg.lobby, msg.message.as_str(), msg.id);
     }
 }
 
@@ -486,7 +500,7 @@ impl Handler<Update> for GameServer {
                 state.x = msg.duck.x;
                 state.y = msg.duck.y;
                 state.z = msg.duck.z;
-                state.rotation = msg.duck.rotation;
+                state.rotation_radians = msg.duck.rotation_radians;
             }
             None => {}
         }
@@ -494,10 +508,10 @@ impl Handler<Update> for GameServer {
     }
 }
 
-impl Handler<StartGame> for GameServer {
-    type Result = MessageResult<StartGame>;
+impl Handler<StartLobby> for GameServer {
+    type Result = MessageResult<StartLobby>;
 
-    fn handle(&mut self, msg: StartGame, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: StartLobby, _: &mut Self::Context) -> Self::Result {
         self.lobbies.get_mut(&msg.lobby).unwrap().game_duration =
             Duration::from_secs(msg.game_duration);
         if let Some(lobby) = self.lobbies.get(&msg.lobby) {
@@ -509,7 +523,7 @@ impl Handler<StartGame> for GameServer {
                     lobby.game_duration.as_secs()
                 );
                 let now = Some(std::time::SystemTime::now());
-                self.send_message(
+                self.send_message_to_lobby(
                     &msg.lobby,
                     &format!(
                         "/start_game\n{}\n{}",

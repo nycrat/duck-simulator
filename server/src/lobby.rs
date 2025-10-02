@@ -5,22 +5,22 @@ use std::{
 
 #[derive(Debug)]
 pub struct Lobby {
-    pub duck_ids: HashMap<u32, (String, String, String)>,
+    pub duck_map: HashMap<u32, (String, String, String)>,
     pub spectator_ids: HashSet<u32>,
-    pub bread: Vec<(f32, f32, f32)>,
+    pub bread_list: Vec<(f32, f32, f32)>,
     pub start_time: Option<std::time::SystemTime>,
-    pub now: std::time::SystemTime,
+    pub current_time: std::time::SystemTime,
     pub game_duration: Duration,
 }
 
 impl Lobby {
     pub fn new() -> Self {
         Self {
-            duck_ids: HashMap::new(),
+            duck_map: HashMap::new(),
             spectator_ids: HashSet::new(),
-            bread: Vec::new(),
+            bread_list: Vec::new(),
             start_time: None,
-            now: std::time::SystemTime::now(),
+            current_time: std::time::SystemTime::now(),
             game_duration: Duration::from_secs(120),
         }
     }

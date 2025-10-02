@@ -12,22 +12,27 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 #[derive(Debug)]
 pub struct Client {
     pub id: u32,
-    pub hb: Instant,
-    pub addr: Addr<server::GameServer>,
+    pub last_heartbeat_time: Instant,
+    pub server_address: Addr<server::GameServer>,
 }
 
 impl Client {
-    fn hb(&self, ctx: &mut ws::WebsocketContext<Self>) {
-        ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
+    fn heartbeat(&self, ctx: &mut ws::WebsocketContext<Self>) {
+        ctx.run_interval(HEARTBEAT_INTERVAL, |actor, context| {
             // check client heartbeats
-            if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
-                println!("Websocket Client heartbeat failed, disconnecting!");
-                act.addr.do_send(server::Disconnect { id: act.id });
-                ctx.stop();
+            if Instant::now().duration_since(actor.last_heartbeat_time) > CLIENT_TIMEOUT {
+                log::info!(
+                    "Websocket Client ({}) heartbeat failed, disconnecting!",
+                    actor.id
+                );
+                actor
+                    .server_address
+                    .do_send(server::Disconnect { id: actor.id });
+                context.stop();
                 return;
             }
 
-            ctx.ping(b"");
+            context.ping(b"");
         });
     }
 }
@@ -35,8 +40,8 @@ impl Client {
 impl Actor for Client {
     type Context = ws::WebsocketContext<Self>;
 
-    fn started(&mut self, ctx: &mut Self::Context) {
-        self.hb(ctx);
+    fn started(&mut self, context: &mut Self::Context) {
+        self.heartbeat(context);
 
         // let addr = ctx.address();
         // self.addr
@@ -56,75 +61,78 @@ impl Actor for Client {
     }
 
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
-        // notify chat server
-        self.addr.do_send(server::Disconnect { id: self.id });
+        // notify game server
+        self.server_address
+            .do_send(server::Disconnect { id: self.id });
         Running::Stop
     }
 }
 
-impl Handler<server::MessageWoah> for Client {
+impl Handler<server::GameMessage> for Client {
     type Result = ();
 
-    fn handle(&mut self, msg: server::MessageWoah, ctx: &mut Self::Context) {
-        if msg.0.is_some() {
-            ctx.text(msg.0.unwrap());
+    fn handle(&mut self, message: server::GameMessage, context: &mut Self::Context) {
+        if message.0.is_some() {
+            context.text(message.0.unwrap());
         }
-        if msg.1.is_some() {
-            ctx.binary(msg.1.unwrap());
+        if message.1.is_some() {
+            context.binary(message.1.unwrap());
         }
     }
 }
 
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
-    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
-        let msg = match msg {
+    fn handle(
+        &mut self,
+        message: Result<ws::Message, ws::ProtocolError>,
+        context: &mut Self::Context,
+    ) {
+        let message = match message {
             Err(_) => {
-                ctx.stop();
+                context.stop();
                 return;
             }
-            Ok(msg) => msg,
+            Ok(message) => message,
         };
 
-        log::debug!("WEBSOCKET MESSAGE: {msg:?}");
-        match msg {
-            ws::Message::Ping(msg) => {
-                self.hb = Instant::now();
-                ctx.pong(&msg);
+        log::debug!("WEBSOCKET MESSAGE: {message:?}");
+        match message {
+            ws::Message::Ping(message) => {
+                self.last_heartbeat_time = Instant::now();
+                context.pong(&message);
             }
             ws::Message::Pong(_) => {
-                self.hb = Instant::now();
+                self.last_heartbeat_time = Instant::now();
             }
             ws::Message::Text(text) => {
-                let m = text.trim();
+                let message = text.trim();
 
-                if m.starts_with('/') {
-                    let v: Vec<&str> = m.splitn(2, ' ').collect();
+                if message.starts_with('/') {
+                    let v: Vec<&str> = message.splitn(2, ' ').collect();
                     match v[0] {
-                        "/list" => {
-                            self.addr
-                                .send(server::ListLobbies)
-                                .into_actor(self)
-                                .then(|res, _, ctx| {
-                                    match res {
-                                        Ok(lobbies) => {
-                                            let lobbies: String = lobbies
-                                                .into_iter()
-                                                .map(|lobby| "\n".to_owned() + &lobby)
-                                                .collect();
-                                            ctx.text(format!("/list{lobbies}"));
-                                        }
-                                        _ => println!("Something is wrong"),
+                        "/list" => self
+                            .server_address
+                            .send(server::ListLobbies)
+                            .into_actor(self)
+                            .then(|res, _, ctx| {
+                                match res {
+                                    Ok(lobbies) => {
+                                        let lobbies: String = lobbies
+                                            .into_iter()
+                                            .map(|lobby| "\n".to_owned() + &lobby)
+                                            .collect();
+                                        ctx.text(format!("/list{lobbies}"));
                                     }
-                                    fut::ready(())
-                                })
-                                .wait(ctx)
-                            // .wait(ctx) pauses all events in context,
-                        }
+                                    _ => println!("Something is wrong"),
+                                }
+                                fut::ready(())
+                            })
+                            .wait(context),
                         "/join" => {
                             if v.len() == 2 {
                                 // name duck color
-                                println!("JOINED");
-                                self.addr.do_send(server::Join {
+                                log::info!("JOINED");
+                                self.server_address.do_send(server::Join {
                                     id: self.id,
                                     name: v[1].to_owned(),
                                 });
@@ -136,9 +144,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
                             let variety = duck_info[1].to_owned();
                             let color = duck_info[2].to_owned();
 
-                            self.addr
+                            self.server_address
                                 .send(server::Connect {
-                                    addr: ctx.address().recipient(),
+                                    recipient: context.address().recipient(),
                                     name,
                                     variety,
                                     color,
@@ -151,42 +159,41 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
                                     }
                                     fut::ready(())
                                 })
-                                .wait(ctx);
+                                .wait(context);
 
-                            println!("joined: {duck_info:?}");
+                            log::info!("joined: {duck_info:?}");
                         }
                         "/start_game" => {
                             let (lobby, game_duration) = v[1].split_once(" ").unwrap();
-                            self.addr.do_send(server::StartGame {
+                            self.server_address.do_send(server::StartLobby {
                                 lobby: lobby.to_owned(),
                                 game_duration: game_duration.parse().unwrap(),
                             });
                         }
-                        _ => ctx.text(format!("/{m:?}")),
+                        _ => context.text(format!("/{message:?}")),
                     }
                 } else {
                 }
             }
             ws::Message::Binary(bytes) => {
-                let in_msg = protos::Duck::parse_from_bytes(&bytes).unwrap();
-                self.addr.do_send(server::Update {
+                let in_message = protos::Duck::parse_from_bytes(&bytes).unwrap();
+                self.server_address.do_send(server::Update {
                     id: self.id,
                     duck: Duck {
-                        x: in_msg.x,
-                        y: in_msg.y,
-                        z: in_msg.z,
-                        rotation: in_msg.rotation,
+                        x: in_message.x,
+                        y: in_message.y,
+                        z: in_message.z,
+                        rotation_radians: in_message.rotation,
                         score: 0,
                     },
                 });
-                // println!("{in_msg}");
             }
             ws::Message::Close(reason) => {
-                ctx.close(reason);
-                ctx.stop();
+                context.close(reason);
+                context.stop();
             }
             ws::Message::Continuation(_) => {
-                ctx.stop();
+                context.stop();
             }
             ws::Message::Nop => (),
         }

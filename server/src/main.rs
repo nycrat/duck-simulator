@@ -10,18 +10,18 @@ mod lobby;
 mod protos;
 mod server;
 
-async fn ws_route(
-    req: HttpRequest,
+async fn websocket_route(
+    request: HttpRequest,
     stream: web::Payload,
-    srv: web::Data<Addr<server::GameServer>>,
+    server: web::Data<Addr<server::GameServer>>,
 ) -> Result<HttpResponse, Error> {
     ws::start(
         client::Client {
             id: 0,
-            hb: Instant::now(),
-            addr: srv.get_ref().clone(),
+            last_heartbeat_time: Instant::now(),
+            server_address: server.get_ref().clone(),
         },
-        &req,
+        &request,
         stream,
     )
 }
@@ -35,7 +35,6 @@ async fn main() -> std::io::Result<()> {
 
     let server = server::GameServer::new().start();
 
-    // let host = std::env::var("HOST").unwrap();
     let host = match local_ip.is_ok() {
         true => local_ip.unwrap().to_string(),
         false => std::env::var("HOST").unwrap(),
@@ -43,16 +42,16 @@ async fn main() -> std::io::Result<()> {
 
     let port: i32 = std::env::var("PORT").unwrap().parse().unwrap();
 
-    log::info!("starting HTTP server at http://{}:{}", host, port);
+    // TODO update to wss when it supports https
+    log::info!("starting game server at ws://{}:{}/ws", host, port);
 
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(server.clone()))
-            .route("/ws", web::get().to(ws_route))
+            .route("/ws", web::get().to(websocket_route))
             .wrap(Logger::default())
     })
     .workers(2)
-    // .bind(("10.13.22.110", 8000))?
     .bind(format!("{host}:{port}"))?
     .run()
     .await
