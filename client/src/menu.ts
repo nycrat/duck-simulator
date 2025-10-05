@@ -75,11 +75,6 @@ export function initializeMenu(game: Game) {
     game.renderer.toneMappingExposure = 0.6;
 
     serverConnect(game);
-
-    if (game.gameMode !== GameMode.OFFLINE) {
-      // makes it visible
-      document.getElementById("timer")!.style.display = "unset";
-    }
   });
 
   document.getElementById("color-input")?.addEventListener("change", (ev) => {

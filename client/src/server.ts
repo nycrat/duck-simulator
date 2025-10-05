@@ -19,6 +19,7 @@ export default function serverConnect(game: Game) {
 
   socket.addEventListener("open", (_event) => {
     game.gameMode = GameMode.WAITING;
+    document.getElementById("timer")!.style.display = "unset";
     game.ducks[0].nameText.visible = true;
     if (!socket) {
       return;
