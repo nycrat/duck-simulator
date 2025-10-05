@@ -4,19 +4,20 @@ use actix::*;
 use actix_web::{middleware::Logger, web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 
-mod client;
 mod duck;
 mod lobby;
 mod protos;
-mod server;
+
+mod actors;
+mod messages;
 
 async fn websocket_route(
     request: HttpRequest,
     stream: web::Payload,
-    server: web::Data<Addr<server::GameServer>>,
+    server: web::Data<Addr<actors::game_server::GameServer>>,
 ) -> Result<HttpResponse, Error> {
     ws::start(
-        client::Client {
+        actors::player::Player {
             id: 0,
             last_heartbeat_time: Instant::now(),
             server_address: server.get_ref().clone(),
@@ -33,7 +34,7 @@ async fn main() -> std::io::Result<()> {
 
     let local_ip = local_ip_address::local_ip();
 
-    let server = server::GameServer::new().start();
+    let server = actors::game_server::GameServer::new().start();
 
     let host = match local_ip.is_ok() {
         true => local_ip.unwrap().to_string(),

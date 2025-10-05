@@ -3,20 +3,20 @@ use std::time::{Duration, Instant};
 use actix::prelude::*;
 use actix_web_actors::ws;
 
-use crate::{duck::Duck, protos::protos::protos, server};
+use crate::{actors, duck::Duck, messages, protos::protos::protos};
 use protobuf::Message;
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[derive(Debug)]
-pub struct Client {
+pub struct Player {
     pub id: u32,
     pub last_heartbeat_time: Instant,
-    pub server_address: Addr<server::GameServer>,
+    pub server_address: Addr<actors::game_server::GameServer>,
 }
 
-impl Client {
+impl Player {
     fn heartbeat(&self, ctx: &mut ws::WebsocketContext<Self>) {
         ctx.run_interval(HEARTBEAT_INTERVAL, |actor, context| {
             // check client heartbeats
@@ -27,7 +27,7 @@ impl Client {
                 );
                 actor
                     .server_address
-                    .do_send(server::Disconnect { id: actor.id });
+                    .do_send(messages::Disconnect { id: actor.id });
                 context.stop();
                 return;
             }
@@ -37,51 +37,22 @@ impl Client {
     }
 }
 
-impl Actor for Client {
+impl Actor for Player {
     type Context = ws::WebsocketContext<Self>;
 
     fn started(&mut self, context: &mut Self::Context) {
         self.heartbeat(context);
-
-        // let addr = ctx.address();
-        // self.addr
-        //     .send(server::Connect {
-        //         addr: addr.recipient(),
-        //     })
-        //     .into_actor(self)
-        //     .then(|res, act, ctx| {
-        //         match res {
-        //             Ok(res) => act.id = res,
-        //             // something is wrong with chat server
-        //             _ => ctx.stop(),
-        //         }
-        //         fut::ready(())
-        //     })
-        //     .wait(ctx);
     }
 
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
         // notify game server
         self.server_address
-            .do_send(server::Disconnect { id: self.id });
+            .do_send(messages::Disconnect { id: self.id });
         Running::Stop
     }
 }
 
-impl Handler<server::GameMessage> for Client {
-    type Result = ();
-
-    fn handle(&mut self, message: server::GameMessage, context: &mut Self::Context) {
-        if message.0.is_some() {
-            context.text(message.0.unwrap());
-        }
-        if message.1.is_some() {
-            context.binary(message.1.unwrap());
-        }
-    }
-}
-
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Player {
     fn handle(
         &mut self,
         message: Result<ws::Message, ws::ProtocolError>,
@@ -112,7 +83,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
                     match v[0] {
                         "/list" => self
                             .server_address
-                            .send(server::ListLobbies)
+                            .send(messages::ListLobbies)
                             .into_actor(self)
                             .then(|res, _, ctx| {
                                 match res {
@@ -138,7 +109,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
                             let color = duck_info[2].to_owned();
 
                             self.server_address
-                                .send(server::Connect {
+                                .send(messages::Connect {
                                     recipient: context.address().recipient(),
                                     name,
                                     variety,
@@ -158,7 +129,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
                         }
                         "/start_game" => {
                             let (lobby, game_duration) = v[1].split_once(" ").unwrap();
-                            self.server_address.do_send(server::StartLobby {
+                            self.server_address.do_send(messages::StartLobby {
                                 lobby: lobby.to_owned(),
                                 game_duration: game_duration.parse().unwrap(),
                             });
@@ -170,7 +141,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Client {
             }
             ws::Message::Binary(bytes) => {
                 let in_message = protos::Duck::parse_from_bytes(&bytes).unwrap();
-                self.server_address.do_send(server::Update {
+                self.server_address.do_send(messages::Update {
                     id: self.id,
                     duck: Duck {
                         x: in_message.x,
