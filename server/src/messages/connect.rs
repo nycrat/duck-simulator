@@ -1,13 +1,16 @@
 use actix::prelude::*;
 use rand::Rng;
 
+use crate::actors;
 use crate::actors::game_server::GameServer;
-use crate::messages::{self, GameMessage};
+use crate::messages;
+
+/// Woah
 
 #[derive(Message)]
 #[rtype(u32)]
 pub struct Connect {
-    pub recipient: Recipient<GameMessage>,
+    pub player_address: Addr<actors::player::Player>,
     pub name: String,
     pub variety: String,
     pub color: String,
@@ -21,26 +24,30 @@ impl Handler<Connect> for GameServer {
         let id = self.rng.gen::<u32>();
 
         if self.lobbies.get("main").unwrap().start_time.is_some() {
-            connect_message.recipient.do_send(messages::GameMessage(
-                Some(format!(
-                    "/spectate_game\n{}\n{}",
-                    self.lobbies.get("main").unwrap().game_duration.as_secs(),
-                    self.lobbies
-                        .get("main")
-                        .unwrap()
-                        .start_time
-                        .unwrap()
-                        .duration_since(std::time::UNIX_EPOCH)
-                        .unwrap()
-                        .as_secs()
-                )),
-                None,
-            ));
+            connect_message
+                .player_address
+                .do_send(messages::GameMessage(
+                    Some(format!(
+                        "/spectate_game\n{}\n{}",
+                        self.lobbies.get("main").unwrap().game_duration.as_secs(),
+                        self.lobbies
+                            .get("main")
+                            .unwrap()
+                            .start_time
+                            .unwrap()
+                            .duration_since(std::time::UNIX_EPOCH)
+                            .unwrap()
+                            .as_secs()
+                    )),
+                    None,
+                ));
 
-            connect_message.recipient.do_send(messages::GameMessage(
-                Some(format!("/id\n{id}").to_owned()),
-                None,
-            ));
+            connect_message
+                .player_address
+                .do_send(messages::GameMessage(
+                    Some(format!("/id\n{id}").to_owned()),
+                    None,
+                ));
             {
                 let other_infos: String = self
                     .lobbies
@@ -51,13 +58,16 @@ impl Handler<Connect> for GameServer {
                     .map(|(id, info)| format!("\n{} {} {} {}", id, info.0, info.1, info.2))
                     .collect();
 
-                connect_message.recipient.do_send(messages::GameMessage(
-                    Some(format!("/join{other_infos}").to_owned()),
-                    None,
-                ));
+                connect_message
+                    .player_address
+                    .do_send(messages::GameMessage(
+                        Some(format!("/join{other_infos}").to_owned()),
+                        None,
+                    ));
             }
 
-            self.clients.insert(id, connect_message.recipient);
+            self.player_actors
+                .insert(id, connect_message.player_address);
             self.lobbies
                 .get_mut("main")
                 .unwrap()
@@ -67,10 +77,12 @@ impl Handler<Connect> for GameServer {
         }
 
         // notify of existing ducks in lobby
-        connect_message.recipient.do_send(messages::GameMessage(
-            Some(format!("/id\n{id}").to_owned()),
-            None,
-        ));
+        connect_message
+            .player_address
+            .do_send(messages::GameMessage(
+                Some(format!("/id\n{id}").to_owned()),
+                None,
+            ));
         {
             let other_infos: String = self
                 .lobbies
@@ -81,13 +93,16 @@ impl Handler<Connect> for GameServer {
                 .map(|(id, info)| format!("\n{} {} {} {}", id, info.0, info.1, info.2))
                 .collect();
 
-            connect_message.recipient.do_send(messages::GameMessage(
-                Some(format!("/join{other_infos}").to_owned()),
-                None,
-            ));
+            connect_message
+                .player_address
+                .do_send(messages::GameMessage(
+                    Some(format!("/join{other_infos}").to_owned()),
+                    None,
+                ));
         }
 
-        self.clients.insert(id, connect_message.recipient);
+        self.player_actors
+            .insert(id, connect_message.player_address);
         self.ducks.insert(
             id,
             crate::duck::Duck {

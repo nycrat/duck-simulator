@@ -1,4 +1,5 @@
 use crate::{
+    actors,
     duck::Duck,
     lobby::Lobby,
     messages::{self},
@@ -22,7 +23,7 @@ use rand::{rngs::ThreadRng, Rng};
 
 #[derive(Debug)]
 pub struct GameServer {
-    pub clients: HashMap<u32, Recipient<messages::GameMessage>>,
+    pub player_actors: HashMap<u32, Addr<actors::player::Player>>,
     pub ducks: HashMap<u32, Duck>,
     pub lobbies: HashMap<String, Lobby>,
     pub rng: ThreadRng,
@@ -36,7 +37,7 @@ impl GameServer {
         lobbies.insert("main".to_owned(), Lobby::new());
 
         GameServer {
-            clients: HashMap::new(),
+            player_actors: HashMap::new(),
             lobbies,
             rng: rand::thread_rng(),
             ducks: HashMap::new(),
@@ -219,14 +220,14 @@ impl GameServer {
         if let Some(lobby) = self.lobbies.get(lobby) {
             for (id, _) in &lobby.duck_map {
                 if *id != skip_id {
-                    if let Some(addr) = self.clients.get(&id) {
+                    if let Some(addr) = self.player_actors.get(&id) {
                         addr.do_send(messages::GameMessage(Some(message.to_owned()), None));
                     }
                 }
             }
             for id in &lobby.spectator_ids {
                 if *id != skip_id {
-                    if let Some(addr) = self.clients.get(&id) {
+                    if let Some(addr) = self.player_actors.get(&id) {
                         addr.do_send(messages::GameMessage(Some(message.to_owned()), None));
                     }
                 }
@@ -239,14 +240,14 @@ impl GameServer {
         if let Some(lobby) = self.lobbies.get(lobby) {
             for (id, _) in &lobby.duck_map {
                 if *id != skip_id {
-                    if let Some(addr) = self.clients.get(&id) {
+                    if let Some(addr) = self.player_actors.get(&id) {
                         addr.do_send(messages::GameMessage(None, Some(message.clone())));
                     }
                 }
             }
             for id in &lobby.spectator_ids {
                 if *id != skip_id {
-                    if let Some(addr) = self.clients.get(&id) {
+                    if let Some(addr) = self.player_actors.get(&id) {
                         addr.do_send(messages::GameMessage(None, Some(message.clone())));
                     }
                 }

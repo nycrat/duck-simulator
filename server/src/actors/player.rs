@@ -9,6 +9,12 @@ use protobuf::Message;
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
+/// A player actor, spawned for each client connection
+///
+/// Contains a player id, a heartbeat for connection, and game server address
+///
+/// `Player` accepts stream from client and communicates with `GameServer` actor
+
 #[derive(Debug)]
 pub struct Player {
     pub id: u32,
@@ -110,7 +116,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Player {
 
                             self.server_address
                                 .send(messages::Connect {
-                                    recipient: context.address().recipient(),
+                                    player_address: context.address(),
                                     name,
                                     variety,
                                     color,

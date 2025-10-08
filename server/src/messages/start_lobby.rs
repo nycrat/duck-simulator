@@ -2,6 +2,11 @@ use actix::prelude::*;
 
 use crate::actors::game_server::GameServer;
 
+/// A message to start a game lobby sent to `GameServer` actor
+///
+/// `GameServer` actor sends `GameMessage` to start game for each
+/// `Player` actor in lobby
+
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct StartLobby {
@@ -17,7 +22,7 @@ impl Handler<StartLobby> for GameServer {
             std::time::Duration::from_secs(msg.game_duration);
         if let Some(lobby) = self.lobbies.get(&msg.lobby) {
             if lobby.start_time.is_none() {
-                println!(
+                log::info!(
                     "STARTED GAME FOR LOBBY {} WITH {} DUCKS WITH DURATION {}",
                     &msg.lobby,
                     self.ducks.len(),

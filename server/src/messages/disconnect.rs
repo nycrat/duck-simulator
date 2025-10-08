@@ -15,7 +15,7 @@ impl Handler<Disconnect> for GameServer {
         let mut lobbies: Vec<String> = Vec::new();
 
         // remove address
-        if self.clients.remove(&msg.id).is_some() || self.ducks.remove(&msg.id).is_some() {
+        if self.player_actors.remove(&msg.id).is_some() || self.ducks.remove(&msg.id).is_some() {
             // remove session from all lobbies
             for (name, lobby) in &mut self.lobbies {
                 if lobby.duck_map.remove(&msg.id).is_some() {
