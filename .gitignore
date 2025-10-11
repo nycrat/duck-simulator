@@ -1,13 +1,9 @@
 .DS_Store
 
-# client
+frontend/node_modules/
+frontend/dist/
 
-node_modules/
-dist/
-
-# server
-
-server/debug/
-server/target/
+backend/debug/
+backend/target/
 
 .env
