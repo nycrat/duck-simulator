@@ -15,8 +15,8 @@ game actor sends to client websocket:
 - "re:join_game" (id)
 - "cast:start_game" ()
 - "cast:end_game" ()
-- "cast:new_duck_joined" (name, variety, color)
-- cast:"bread_spawn" (position3)
+- "cast:new_duck_joined" (id, name, variety, color)
+- "cast:bread_spawn" (position3)
 - cast:binary_update_world (UpdateSyncProto)
 
 player actor sends to game server actor:
