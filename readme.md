@@ -2,27 +2,33 @@
 
 ![duck simulator](/menu.png)
 
-- characters that move around
+## messages
 
-- duckies
+client sends:
 
-- eating the most bread
+- "join_game" (name, variety, color)
+- "vote_start_game" ()
+- binary_update (DuckProto)
 
-  - pizza
-  - and baguette
+game actor sends to client websocket:
 
-- 3d modelling
+- "re:join_game" (id)
+- "cast:start_game" ()
+- "cast:end_game" ()
+- "cast:new_duck_joined" (name, variety, color)
+- cast:"bread_spawn" (position3)
+- cast:binary_update_world (UpdateSyncProto)
 
-  - model a ducky
+player actor sends to game server actor:
 
-- different maps
+- JoinGame (name, variety, color)
+- VoteStartGame ()
+- Update (position2)
 
-  - pond
-  - eiffel tower
-  - walmart
+game server actor sends to player actor:
 
-- 1:00 timer whoever is on top wins
-
-- bump into other ducks to stun them (tail?)
-
-  - steal n% of bread ?
+- re:JoinGame (id)
+- StartGame ()
+- BreadSpawn (position3)
+- UpdateWorld (UpdateSyncProto)
+- EndGame ()
