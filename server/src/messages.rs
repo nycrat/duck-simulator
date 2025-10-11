@@ -1,15 +1,14 @@
-pub mod connect;
-pub mod disconnect;
-pub mod game_message;
-pub mod join_lobby;
-pub mod list_lobbies;
-pub mod start_lobby;
+pub mod end_game;
+pub mod join_game;
+pub mod leave_game;
+pub mod start_game;
 pub mod update;
+pub mod vote_start_game;
 
-pub use connect::Connect;
-pub use disconnect::Disconnect;
-pub use game_message::GameMessage;
-pub use join_lobby::JoinLobby;
-pub use list_lobbies::ListLobbies;
-pub use start_lobby::StartLobby;
+pub use end_game::CastEndGame;
+pub use join_game::JoinGame;
+pub use leave_game::LeaveGame;
+pub use start_game::StartGame;
+pub use update::CastUpdateGame;
 pub use update::Update;
+pub use vote_start_game::VoteStartGame;

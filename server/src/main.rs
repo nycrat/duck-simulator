@@ -5,11 +5,12 @@ use actix_web::{middleware::Logger, web, App, Error, HttpRequest, HttpResponse, 
 use actix_web_actors::ws;
 
 mod duck;
-mod lobby;
 mod protos;
 
 mod actors;
 mod messages;
+
+/// Returns
 
 async fn websocket_route(
     request: HttpRequest,

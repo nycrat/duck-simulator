@@ -33,7 +33,7 @@ impl Player {
                 );
                 actor
                     .server_address
-                    .do_send(messages::Disconnect { id: actor.id });
+                    .do_send(messages::LeaveGame { id: actor.id });
                 context.stop();
                 return;
             }
@@ -53,12 +53,13 @@ impl Actor for Player {
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
         // notify game server
         self.server_address
-            .do_send(messages::Disconnect { id: self.id });
+            .do_send(messages::LeaveGame { id: self.id });
         Running::Stop
     }
 }
 
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Player {
+    /// Handles logic when receiving messages from websocket
     fn handle(
         &mut self,
         message: Result<ws::Message, ws::ProtocolError>,
@@ -84,65 +85,28 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Player {
             ws::Message::Text(text) => {
                 let message = text.trim();
 
-                if message.starts_with('/') {
-                    let v: Vec<&str> = message.splitn(2, ' ').collect();
-                    match v[0] {
-                        "/list" => self
-                            .server_address
-                            .send(messages::ListLobbies)
-                            .into_actor(self)
-                            .then(|res, _, ctx| {
-                                match res {
-                                    Ok(lobbies) => {
-                                        let lobbies: String = lobbies
-                                            .into_iter()
-                                            .map(|lobby| "\n".to_owned() + &lobby)
-                                            .collect();
-                                        ctx.text(format!("/list{lobbies}"));
-                                    }
-                                    _ => println!("Something is wrong"),
-                                }
-                                fut::ready(())
-                            })
-                            .wait(context),
-                        "/join_lobby" => {
-                            panic!("joining different lobbies is not implemented yet")
-                        }
-                        "/info" => {
-                            let duck_info: Vec<&str> = v[1].splitn(3, " ").collect();
-                            let name = duck_info[0].to_owned();
-                            let variety = duck_info[1].to_owned();
-                            let color = duck_info[2].to_owned();
+                let v: Vec<&str> = message.splitn(100, '\n').collect();
 
-                            self.server_address
-                                .send(messages::Connect {
-                                    player_address: context.address(),
-                                    name,
-                                    variety,
-                                    color,
-                                })
-                                .into_actor(self)
-                                .then(|res, act, ctx| {
-                                    match res {
-                                        Ok(res) => act.id = res,
-                                        _ => ctx.stop(),
-                                    }
-                                    fut::ready(())
-                                })
-                                .wait(context);
+                match v[0] {
+                    "join_game" => {
+                        let name = v[1].to_owned();
+                        let variety = v[2].to_owned();
+                        let color = v[3].to_owned();
 
-                            log::info!("joined: {duck_info:?}");
-                        }
-                        "/start_game" => {
-                            let (lobby, game_duration) = v[1].split_once(" ").unwrap();
-                            self.server_address.do_send(messages::StartLobby {
-                                lobby: lobby.to_owned(),
-                                game_duration: game_duration.parse().unwrap(),
-                            });
-                        }
-                        _ => context.text(format!("/{message:?}")),
+                        self.server_address.do_send(messages::JoinGame {
+                            player_address: context.address(),
+                            name,
+                            variety,
+                            color,
+                        });
+
+                        log::info!("joined: {v:?}");
                     }
-                } else {
+                    "vote_start_game" => {
+                        // TODO implement vote start system instead
+                        self.server_address.do_send(messages::StartGame {});
+                    }
+                    _ => {}
                 }
             }
             ws::Message::Binary(bytes) => {
@@ -154,7 +118,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Player {
                         y: in_message.y,
                         z: in_message.z,
                         rotation_radians: in_message.rotation,
-                        score: 0,
+                        ..Duck::new()
                     },
                 });
             }

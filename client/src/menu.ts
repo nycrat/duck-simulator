@@ -2,7 +2,7 @@ import { Profanity, ProfanityOptions } from "@2toad/profanity";
 import Game from "./game";
 import Duck from "./objects/duck";
 import { GameMode, POV } from "./options";
-import serverConnect from "./server";
+import serverConnect from "./multiplayer";
 
 export function initializeMenu(game: Game) {
   const menu = document.getElementById("menu");

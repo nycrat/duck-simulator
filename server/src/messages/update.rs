@@ -1,6 +1,6 @@
 use actix::prelude::*;
 
-use crate::actors::game_server::GameServer;
+use crate::actors::{game_server::GameServer, player::Player};
 
 /// A message to update duck state sent to `GameServer` actor
 ///
@@ -14,7 +14,7 @@ pub struct Update {
 }
 
 impl Handler<Update> for GameServer {
-    type Result = MessageResult<Update>;
+    type Result = ();
 
     fn handle(&mut self, msg: Update, _: &mut Self::Context) -> Self::Result {
         if let Some(duck) = self.ducks.get_mut(&msg.id) {
@@ -23,6 +23,19 @@ impl Handler<Update> for GameServer {
             duck.z = msg.duck.z;
             duck.rotation_radians = msg.duck.rotation_radians;
         }
-        MessageResult(())
+    }
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct CastUpdateGame {
+    pub update_data: Vec<u8>,
+}
+
+impl Handler<CastUpdateGame> for Player {
+    type Result = ();
+
+    fn handle(&mut self, message: CastUpdateGame, context: &mut Self::Context) -> Self::Result {
+        context.binary(message.update_data);
     }
 }
