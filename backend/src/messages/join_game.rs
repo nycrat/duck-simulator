@@ -2,12 +2,13 @@ use actix::prelude::*;
 use rand::Rng;
 
 use crate::{
-    actors::{game_server::GameServer, player::Player},
+    actors::{GameServer, Player},
     duck::Duck,
 };
 
-/// Woah
-
+/// A message to `GameServer` actor that new player has joined
+///
+/// Gives address of `Player` actor and name, variety, color of duck
 #[derive(Message, Clone)]
 #[rtype("()")]
 pub struct JoinGame {
@@ -66,6 +67,7 @@ impl Handler<JoinGame> for GameServer {
     }
 }
 
+/// A response message to `Player` actor to communicate the duck's given id
 #[derive(Message)]
 #[rtype("()")]
 pub struct ReJoinGame {
@@ -81,6 +83,7 @@ impl Handler<ReJoinGame> for Player {
     }
 }
 
+/// A message to `Player` actor to broadcast a new duck joining
 #[derive(Message)]
 #[rtype("()")]
 pub struct CastJoinGame {

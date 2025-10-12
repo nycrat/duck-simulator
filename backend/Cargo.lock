@@ -554,6 +554,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
+name = "duck-simulator-backend"
+version = "0.1.0"
+dependencies = [
+ "actix",
+ "actix-web",
+ "actix-web-actors",
+ "dotenvy",
+ "env_logger",
+ "local-ip-address",
+ "log",
+ "protobuf",
+ "protobuf-codegen",
+ "rand 0.8.5",
+]
+
+[[package]]
 name = "either"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1477,22 +1493,6 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
-]
-
-[[package]]
-name = "server"
-version = "0.1.0"
-dependencies = [
- "actix",
- "actix-web",
- "actix-web-actors",
- "dotenvy",
- "env_logger",
- "local-ip-address",
- "log",
- "protobuf",
- "protobuf-codegen",
- "rand 0.8.5",
 ]
 
 [[package]]

@@ -1,24 +1,24 @@
-use std::time::Instant;
+#![warn(missing_docs)]
+#![doc = include_str!("../readme.md")]
 
 use actix::*;
 use actix_web::{middleware::Logger, web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
-
-mod duck;
-mod protos;
+use std::time::Instant;
 
 mod actors;
+mod duck;
 mod messages;
+mod protos;
 
-/// Returns
-
-async fn websocket_route(
+/// Spawns a player actor linked to the websocket connection
+async fn spawn_player_actor(
     request: HttpRequest,
     stream: web::Payload,
-    server: web::Data<Addr<actors::game_server::GameServer>>,
+    server: web::Data<Addr<actors::GameServer>>,
 ) -> Result<HttpResponse, Error> {
     ws::start(
-        actors::player::Player {
+        actors::Player {
             id: 0,
             last_heartbeat_time: Instant::now(),
             server_address: server.get_ref().clone(),
@@ -28,29 +28,26 @@ async fn websocket_route(
     )
 }
 
+/// Starts web server with websocket route /ws for client connection
+///
+/// Attaches a single game server actor as server state
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-    dotenvy::dotenv().unwrap();
 
     let local_ip = local_ip_address::local_ip();
-
-    let server = actors::game_server::GameServer::new().start();
-
     let host = match local_ip.is_ok() {
         true => local_ip.unwrap().to_string(),
-        false => std::env::var("HOST").unwrap(),
+        false => String::from("localhost"),
     };
-
     let port: i32 = 4421;
 
-    // TODO update to wss when it supports https
-    log::info!("starting game server at ws://{}:{}/ws", host, port);
+    let game_actor_address = actors::GameServer::new().start();
 
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(server.clone()))
-            .route("/ws", web::get().to(websocket_route))
+            .app_data(web::Data::new(game_actor_address.clone()))
+            .route("/ws", web::get().to(spawn_player_actor))
             .wrap(Logger::default())
     })
     .workers(2)

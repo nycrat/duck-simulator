@@ -1,9 +1,11 @@
-pub mod end_game;
-pub mod join_game;
-pub mod leave_game;
-pub mod start_game;
-pub mod update;
-pub mod vote_start_game;
+//! Messages for actor-actor communication
+
+mod end_game;
+mod join_game;
+mod leave_game;
+mod start_game;
+mod update;
+mod vote_start_game;
 
 pub use end_game::CastEndGame;
 pub use join_game::JoinGame;

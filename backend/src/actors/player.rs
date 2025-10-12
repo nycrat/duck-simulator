@@ -13,8 +13,8 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 ///
 /// Contains a player id, a heartbeat for connection, and game server address
 ///
-/// `Player` accepts stream from client and communicates with `GameServer` actor
-
+/// `Player` communicates with client via websocket stream
+/// and communicates with `GameServer` actor through messages
 #[derive(Debug)]
 pub struct Player {
     pub id: u32,

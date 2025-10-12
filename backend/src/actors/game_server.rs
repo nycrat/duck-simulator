@@ -15,10 +15,9 @@ use rand::{rngs::ThreadRng, Rng};
 
 /// A game server actor
 ///
-/// Contains state of all ducks and lobbies, and addresses of player actors
+/// Contains state of all player actor addresses, and game state
 ///
 /// Handles updating world state and communicates with `Player` actor
-
 #[derive(Debug)]
 pub struct GameServer {
     pub player_actors: HashMap<u32, Addr<actors::player::Player>>,

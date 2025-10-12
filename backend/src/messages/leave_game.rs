@@ -1,11 +1,10 @@
 use actix::prelude::*;
 
-use crate::actors::{game_server::GameServer, player::Player};
+use crate::actors::{GameServer, Player};
 
-/// TODO !!!
-
+/// A message to `GameServer` actor that a duck has left the game
 #[derive(Message)]
-#[rtype(result = "()")]
+#[rtype("()")]
 pub struct LeaveGame {
     pub id: u32,
 }
@@ -25,6 +24,7 @@ impl Handler<LeaveGame> for GameServer {
     }
 }
 
+/// A message to `Player` actor to broadcast a duck has left the game
 #[derive(Message)]
 #[rtype("()")]
 pub struct CastLeaveGame {

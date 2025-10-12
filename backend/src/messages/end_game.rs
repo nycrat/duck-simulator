@@ -1,9 +1,10 @@
 use actix::prelude::*;
 
-use crate::actors::player::Player;
+use crate::actors::Player;
 
+/// A message to `Player` actor to broadcast game has ended
 #[derive(Message)]
-#[rtype(result = "()")]
+#[rtype("()")]
 pub struct CastEndGame {}
 
 impl Handler<CastEndGame> for Player {

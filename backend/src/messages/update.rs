@@ -1,13 +1,10 @@
 use actix::prelude::*;
 
-use crate::actors::{game_server::GameServer, player::Player};
+use crate::actors::{GameServer, Player};
 
-/// A message to update duck state sent to `GameServer` actor
-///
-/// `GameServer` actor state updates duck with `Update` message
-
+/// A message to `GameServer` actor with an update of a duck's state
 #[derive(Message)]
-#[rtype(result = "()")]
+#[rtype("()")]
 pub struct Update {
     pub id: u32,
     pub duck: crate::duck::Duck,
@@ -26,8 +23,9 @@ impl Handler<Update> for GameServer {
     }
 }
 
+/// A message to `Player` actor to broadcast updated game state
 #[derive(Message)]
-#[rtype(result = "()")]
+#[rtype("()")]
 pub struct CastUpdateGame {
     pub update_data: Vec<u8>,
 }

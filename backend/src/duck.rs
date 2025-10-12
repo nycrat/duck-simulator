@@ -1,3 +1,4 @@
+/// Duck class
 #[derive(Debug)]
 pub struct Duck {
     pub x: f32,

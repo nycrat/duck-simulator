@@ -1,2 +1,7 @@
-pub mod game_server;
-pub mod player;
+//! Actors
+
+mod game_server;
+mod player;
+
+pub use game_server::GameServer;
+pub use player::Player;

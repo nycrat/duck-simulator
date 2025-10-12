@@ -1,14 +1,12 @@
 use actix::prelude::*;
 
-use crate::actors::{game_server::GameServer, player::Player};
+use crate::actors::{GameServer, Player};
 
-/// A message to start game sent to `GameServer` actor
+/// A message to `GameServer` actor to start the game
 ///
-/// `GameServer` actor sends `GameMessage` to start game for each
-/// `Player` actor in lobby
-
+/// TODO replace this message with vote start
 #[derive(Message)]
-#[rtype(result = "()")]
+#[rtype("()")]
 pub struct StartGame {}
 
 impl Handler<StartGame> for GameServer {
@@ -36,8 +34,9 @@ impl Handler<StartGame> for GameServer {
     }
 }
 
+/// A message to `Player` actor to broadcast game starting
 #[derive(Message)]
-#[rtype(result = "()")]
+#[rtype("()")]
 pub struct CastStartGame {
     start_time: std::time::SystemTime,
     game_duration: std::time::Duration,
