@@ -5,7 +5,7 @@ import { GameMode, POV } from "./options";
 import serverConnect from "./multiplayer";
 
 /**
- * TODO
+ * Sets all the on click handlers for menu buttons
  */
 export function initializeMenu(game: Game) {
   const menu = document.getElementById("menu");

@@ -2,21 +2,21 @@ import Duck from "./objects/duck";
 import Protos from "../protos_pb";
 
 /**
- * TODO
+ * Message sent to backend, indicates this duck has joined the game
  */
 export function joinGameMessage(duck: Duck) {
   return `join_game\n${duck.duckName}\n${duck.variety}\n${duck.color}`;
 }
 
 /**
- * TODO
+ * Message sent to backend, indicates this duck voted to start game
  */
 export function voteStartGameMessage() {
   return `vote_start_game`;
 }
 
 /**
- * TODO
+ * Binary message sent to backend, indicates this duck's current world state
  */
 export function binaryUpdateMessage(duck: Duck) {
   const duckState = new Protos.Duck();

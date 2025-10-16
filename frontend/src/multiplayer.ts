@@ -6,7 +6,7 @@ import { GameMode } from "./options";
 import { binaryUpdateMessage, joinGameMessage } from "./messages";
 
 /**
- * TODO
+ * Connects to backend and adds event listeners to handle incoming messages
  */
 export default function serverConnect(game: Game) {
   var socket: WebSocket | null = null;
@@ -39,7 +39,7 @@ export default function serverConnect(game: Game) {
 }
 
 /**
- * TODO
+ * Event handler for websocket connecting
  */
 function handleOpen(socket: WebSocket | null, game: Game) {
   if (!socket) {
@@ -60,7 +60,7 @@ function handleOpen(socket: WebSocket | null, game: Game) {
 }
 
 /**
- * TODO
+ * Event handler for receiving string messages
  */
 function handleStringMessage(message: MessageEvent, game: Game) {
   if (typeof message.data !== "string") {
@@ -139,7 +139,7 @@ function handleStringMessage(message: MessageEvent, game: Game) {
 }
 
 /**
- * TODO
+ * Event handler for receiving binary messages
  */
 async function handleBinaryMessage(message: MessageEvent, game: Game) {
   if (typeof message.data === "string") {

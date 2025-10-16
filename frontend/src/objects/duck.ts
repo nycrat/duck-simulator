@@ -3,7 +3,7 @@ import { GLTF, GLTFLoader } from "three/examples/jsm/Addons.js";
 import { Text } from "troika-three-text";
 
 /**
- * TODO
+ * Variety of duck (skins)
  */
 export enum DuckVariety {
   DUCK,
@@ -31,9 +31,6 @@ export default class Duck extends THREE.Group {
   variety: DuckVariety;
   color: string;
 
-  /**
-   * TODO
-   */
   constructor(duckName: string, variety: DuckVariety, color: string) {
     super();
 
@@ -86,7 +83,7 @@ export default class Duck extends THREE.Group {
   }
 
   /**
-   * TODO
+   * Moves duck forward and rotates duck
    */
   update(deltaTime: number) {
     this.direction += this.deltaDirection * deltaTime;
@@ -103,14 +100,14 @@ export default class Duck extends THREE.Group {
   }
 
   /**
-   * TODO
+   * Changes the displayed score on duck's text
    */
   updateScore() {
     this.nameText.text = this.duckName + "\n" + this.score;
   }
 
   /**
-   * TODO
+   * Changes the color of duck
    */
   updateColor(color: string) {
     const duck_model = this.getObjectByName("duck")!;

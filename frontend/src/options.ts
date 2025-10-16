@@ -1,5 +1,5 @@
 /**
- * TODO
+ * Point of view for the player
  */
 export enum POV {
   FIRST_PERSON,
@@ -10,7 +10,7 @@ export enum POV {
 }
 
 /**
- * TODO
+ * Current state of the game
  */
 export enum GameMode {
   MENU,

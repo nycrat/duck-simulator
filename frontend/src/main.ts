@@ -8,7 +8,7 @@ window.oncontextmenu = () => {
 };
 
 /**
- * TODO
+ * Creates the singleton game instance, initializes the map and menu
  */
 function startGame() {
   if (!WebGL.isWebGLAvailable()) {

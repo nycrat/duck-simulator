@@ -10,9 +10,6 @@ export default class Bread extends THREE.Group {
   velocityY: number;
   size: THREE.Vector3;
 
-  /**
-   * TODO
-   */
   constructor(x?: number, y?: number, z?: number) {
     super();
     if (bread_glb) {
@@ -51,7 +48,7 @@ export default class Bread extends THREE.Group {
   }
 
   /**
-   * TODO
+   * Applies gravity to bread
    */
   update(deltaTime: number) {
     if (this.position.y <= 0) {

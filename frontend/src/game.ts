@@ -28,9 +28,6 @@ export default class Game {
   controls: FirstPersonControls;
   gameDuration = 0;
 
-  /**
-   * TODO
-   */
   constructor() {
     this.clock = new THREE.Clock();
     this.pressedKeys = new Map();
@@ -70,7 +67,7 @@ export default class Game {
   }
 
   /**
-   * TODO
+   * Add event listeners for key press and touch, add and removes keys to `pressedKeys`
    */
   initControls() {
     const self = this;
@@ -111,7 +108,7 @@ export default class Game {
   }
 
   /**
-   * TODO
+   * Renders 3D game world
    */
   render(self: Game) {
     requestAnimationFrame(() => self.render(self));
@@ -120,7 +117,7 @@ export default class Game {
   }
 
   /**
-   * TODO
+   * Updates game world to next tick
    */
   update() {
     const self = this;
@@ -236,7 +233,7 @@ export default class Game {
   }
 
   /**
-   * TODO
+   * Updates camera based on game mode and POV
    */
   updateCamera() {
     const self = this;
@@ -315,7 +312,7 @@ export default class Game {
   }
 
   /**
-   * TODO
+   * Handles collisions between duck and bread
    */
   handleCollisions() {
     const self = this;
@@ -347,7 +344,11 @@ export default class Game {
   }
 
   /**
-   * TODO
+   * Handles updates based on pressed keys input
+   *
+   * @remarks
+   * `handleInput` does not actually handle an input event,
+   * instead, using `pressedKeys` map as the current input state
    */
   handleInput() {
     const self = this;

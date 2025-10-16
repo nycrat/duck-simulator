@@ -4,7 +4,7 @@ import initDefaultMap from "./default";
 import initOceanMap from "./ocean";
 
 /**
- * TODO
+ * The current game map
  */
 export enum GameMap {
   DEFAULT,
@@ -22,6 +22,9 @@ const mapInitFunctions: Map<GameMap, (game: Game) => void> = new Map();
   mapInitFunctions.set(a.map, a.func);
 });
 
+/**
+ * Calls the initialization function for a map, changing the game's scene
+ */
 export default function initializeMap(map: GameMap, game: Game) {
   mapInitFunctions.get(map)!(game);
 }
