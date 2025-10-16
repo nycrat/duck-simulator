@@ -13,7 +13,7 @@ export default class Pond extends Water {
       textureWidth: 2048,
       textureHeight: 2048,
       waterNormals: new THREE.TextureLoader().load(
-        "waternormals.jpg",
+        "water_normals.jpg",
         function (texture) {
           texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         },
