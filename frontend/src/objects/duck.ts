@@ -50,7 +50,6 @@ export default class Duck extends THREE.Group {
         });
 
         duck_glbs.set(variety, glb);
-        // this.add(duck_glbs.get(variety)!.scene.clone());
         this.add(glb.scene.clone());
         this.updateColor(color);
       },

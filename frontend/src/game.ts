@@ -63,7 +63,6 @@ export default class Game {
     );
     this.controls.movementSpeed = 2;
     this.controls.lookSpeed = 0.2;
-    // this.ontrols.rollSpeed = 1;
   }
 
   /**
@@ -299,7 +298,6 @@ export default class Game {
         1,
         Math.cos(self.ducks[0].direction + 0.6) * 2,
       );
-      // self.camera.position.add(self.ducks[0].position);
 
       const lookat = new THREE.Vector3(
         self.ducks[0].position.x,

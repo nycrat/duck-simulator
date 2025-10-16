@@ -26,7 +26,6 @@ export function initializeMenu(game: Game) {
 
     game.pov = POV.LOBBY;
     game.updateCamera();
-    // serverConnect(game);
   });
 
   document.getElementById("options")?.addEventListener("click", (ev) => {
