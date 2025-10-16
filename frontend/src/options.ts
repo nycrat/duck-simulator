@@ -1,3 +1,6 @@
+/**
+ * TODO
+ */
 export enum POV {
   FIRST_PERSON,
   SECOND_PERSON,
@@ -6,6 +9,9 @@ export enum POV {
   LOBBY,
 }
 
+/**
+ * TODO
+ */
 export enum GameMode {
   MENU,
   ZEN,

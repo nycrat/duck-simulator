@@ -4,6 +4,9 @@ import Duck from "./objects/duck";
 import { GameMode, POV } from "./options";
 import serverConnect from "./multiplayer";
 
+/**
+ * TODO
+ */
 export function initializeMenu(game: Game) {
   const menu = document.getElementById("menu");
   const options_menu = document.getElementById("options-menu");

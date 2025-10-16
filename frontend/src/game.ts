@@ -6,6 +6,9 @@ import Stats from "three/examples/jsm/libs/stats.module.js";
 import Pond from "./objects/pond";
 import { FirstPersonControls } from "three/examples/jsm/Addons.js";
 
+/**
+ * Singleton game instance
+ */
 export default class Game {
   clock: THREE.Clock;
   pressedKeys: Map<string, boolean>;
@@ -25,6 +28,9 @@ export default class Game {
   controls: FirstPersonControls;
   gameDuration = 0;
 
+  /**
+   * TODO
+   */
   constructor() {
     this.clock = new THREE.Clock();
     this.pressedKeys = new Map();
@@ -63,6 +69,9 @@ export default class Game {
     // this.ontrols.rollSpeed = 1;
   }
 
+  /**
+   * TODO
+   */
   initControls() {
     const self = this;
 
@@ -101,12 +110,18 @@ export default class Game {
     });
   }
 
+  /**
+   * TODO
+   */
   render(self: Game) {
     requestAnimationFrame(() => self.render(self));
     self.renderer.render(self.scene, self.camera);
     this.stats.update();
   }
 
+  /**
+   * TODO
+   */
   update() {
     const self = this;
     const deltaTime = self.clock.getDelta();
@@ -220,6 +235,9 @@ export default class Game {
     }
   }
 
+  /**
+   * TODO
+   */
   updateCamera() {
     const self = this;
 
@@ -296,6 +314,9 @@ export default class Game {
     }
   }
 
+  /**
+   * TODO
+   */
   handleCollisions() {
     const self = this;
 
@@ -325,6 +346,9 @@ export default class Game {
     }
   }
 
+  /**
+   * TODO
+   */
   handleInput() {
     const self = this;
     const left = self.pressedKeys.get("ArrowLeft") || self.pressedKeys.get("a");

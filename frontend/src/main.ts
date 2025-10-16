@@ -7,6 +7,9 @@ window.oncontextmenu = () => {
   return false;
 };
 
+/**
+ * TODO
+ */
 function startGame() {
   if (!WebGL.isWebGLAvailable()) {
     const warning = WebGL.getWebGLErrorMessage();

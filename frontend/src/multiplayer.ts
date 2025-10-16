@@ -5,6 +5,9 @@ import Bread from "./objects/bread";
 import { GameMode } from "./options";
 import { binaryUpdateMessage, joinGameMessage } from "./messages";
 
+/**
+ * TODO
+ */
 export default function serverConnect(game: Game) {
   var socket: WebSocket | null = null;
 
@@ -35,6 +38,9 @@ export default function serverConnect(game: Game) {
   });
 }
 
+/**
+ * TODO
+ */
 function handleOpen(socket: WebSocket | null, game: Game) {
   if (!socket) {
     return;
@@ -53,6 +59,9 @@ function handleOpen(socket: WebSocket | null, game: Game) {
   }, 10);
 }
 
+/**
+ * TODO
+ */
 function handleStringMessage(message: MessageEvent, game: Game) {
   if (typeof message.data !== "string") {
     return;
@@ -64,7 +73,7 @@ function handleStringMessage(message: MessageEvent, game: Game) {
   switch (data[0]) {
     case "re:join_game":
       const id = data[1];
-      game.ducks[0].idd = id;
+      game.ducks[0].duckId = id;
       break;
 
     case "cast:start_game":
@@ -93,7 +102,7 @@ function handleStringMessage(message: MessageEvent, game: Game) {
     case "cast:join_game":
       // id name variety color
       game.ducks.push(new Duck(data[2], parseInt(data[3]), data[4]));
-      game.ducks[game.ducks.length - 1].idd = data[1];
+      game.ducks[game.ducks.length - 1].duckId = data[1];
       game.ducks[game.ducks.length - 1].nameText.visible = true;
       game.scene.add(game.ducks[game.ducks.length - 1]);
       break;
@@ -111,7 +120,9 @@ function handleStringMessage(message: MessageEvent, game: Game) {
     case "cast:leave_game":
       const leave_id = data[1];
 
-      const leave_index = game.ducks.findIndex((duck) => duck.idd === leave_id);
+      const leave_index = game.ducks.findIndex(
+        (duck) => duck.duckId === leave_id,
+      );
 
       if (leave_index === -1) {
         break;
@@ -127,6 +138,9 @@ function handleStringMessage(message: MessageEvent, game: Game) {
   }
 }
 
+/**
+ * TODO
+ */
 async function handleBinaryMessage(message: MessageEvent, game: Game) {
   if (typeof message.data === "string") {
     return;
@@ -152,7 +166,7 @@ async function handleBinaryMessage(message: MessageEvent, game: Game) {
     const score = ducks[i].getScore();
 
     if (
-      id === game.ducks[0].idd &&
+      id === game.ducks[0].duckId &&
       game.gameMode !== GameMode.LEADERBOARDS &&
       (new Date().getTime() / 1000 - game.startTime < game.gameDuration - 2 ||
         game.startTime === 0)
@@ -162,7 +176,7 @@ async function handleBinaryMessage(message: MessageEvent, game: Game) {
     }
 
     for (const duck of game.ducks) {
-      if (id === duck.idd) {
+      if (id === duck.duckId) {
         duck.position.x = x;
         duck.position.y = y;
         duck.position.z = z;

@@ -3,6 +3,9 @@ import initCloudsMap from "./clouds";
 import initDefaultMap from "./default";
 import initOceanMap from "./ocean";
 
+/**
+ * TODO
+ */
 export enum GameMap {
   DEFAULT,
   CLOUDS,

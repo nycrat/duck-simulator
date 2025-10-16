@@ -1,7 +1,13 @@
 import * as THREE from "three";
 import { Water } from "three/examples/jsm/Addons.js";
 
+/**
+ * TODO
+ */
 export default class Pond extends Water {
+  /**
+   * TODO
+   */
   constructor(radius: number) {
     super(new THREE.CircleGeometry(radius, 32), {
       textureWidth: 2048,
@@ -24,6 +30,9 @@ export default class Pond extends Water {
     this.material.uniforms["size"].value = 1;
   }
 
+  /**
+   * TODO
+   */
   update(deltaTime: number) {
     this.material.uniforms["time"].value += deltaTime * 0.2;
   }

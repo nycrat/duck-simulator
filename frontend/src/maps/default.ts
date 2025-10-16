@@ -55,7 +55,7 @@ export default function initDefaultMap(game: Game) {
 
   const loader = new GLTFLoader();
   loader.load(
-    "waterfallpond2.glb",
+    "waterfall_and_pond.glb",
     (glb) => {
       glb.scene.castShadow = true;
       glb.scene.traverse(function (child) {

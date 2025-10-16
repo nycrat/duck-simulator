@@ -2,6 +2,9 @@ import * as THREE from "three";
 import { GLTF, GLTFLoader } from "three/examples/jsm/Addons.js";
 import { Text } from "troika-three-text";
 
+/**
+ * TODO
+ */
 export enum DuckVariety {
   DUCK,
   RABBIT,
@@ -9,17 +12,28 @@ export enum DuckVariety {
 
 let duck_glbs: Map<DuckVariety, GLTF> = new Map();
 
+/**
+ * A duck/player
+ *
+ * @example
+ * ```typescript
+ * const duck = new Duck("Ducky", DuckVariety.RABBIT, color: "#ffff00")
+ * ```
+ */
 export default class Duck extends THREE.Group {
   direction: number = Math.PI;
   deltaDirection: number = 0;
   size: THREE.Vector3;
-  idd: string = "";
+  duckId: string = "";
   nameText: Text;
   duckName: string;
   score: number = 0;
   variety: DuckVariety;
   color: string;
 
+  /**
+   * TODO
+   */
   constructor(duckName: string, variety: DuckVariety, color: string) {
     super();
 
@@ -28,7 +42,7 @@ export default class Duck extends THREE.Group {
 
     const loader = new GLTFLoader();
     loader.load(
-      `${DuckVariety[variety]}.glb`,
+      `${DuckVariety[variety].toLowerCase()}.glb`,
       (glb) => {
         glb.scene.castShadow = true;
         glb.scene.name = "duck";
@@ -71,6 +85,9 @@ export default class Duck extends THREE.Group {
     this.rotation.set(0, this.direction, 0);
   }
 
+  /**
+   * TODO
+   */
   update(deltaTime: number) {
     this.direction += this.deltaDirection * deltaTime;
 
@@ -85,10 +102,16 @@ export default class Duck extends THREE.Group {
     this.rotation.set(0, this.direction, 0);
   }
 
+  /**
+   * TODO
+   */
   updateScore() {
     this.nameText.text = this.duckName + "\n" + this.score;
   }
 
+  /**
+   * TODO
+   */
   updateColor(color: string) {
     const duck_model = this.getObjectByName("duck")!;
     this.color = color;

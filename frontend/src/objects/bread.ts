@@ -3,10 +3,16 @@ import { GLTF, GLTFLoader } from "three/examples/jsm/Addons.js";
 
 let bread_glb: GLTF;
 
+/**
+ * A bread
+ */
 export default class Bread extends THREE.Group {
   velocityY: number;
   size: THREE.Vector3;
 
+  /**
+   * TODO
+   */
   constructor(x?: number, y?: number, z?: number) {
     super();
     if (bread_glb) {
@@ -14,7 +20,7 @@ export default class Bread extends THREE.Group {
     } else {
       const loader = new GLTFLoader();
       loader.load(
-        "bred.glb",
+        "bread.glb",
         (glb) => {
           glb.scene.castShadow = true;
           glb.scene.traverse(function (child) {
@@ -44,6 +50,9 @@ export default class Bread extends THREE.Group {
     }
   }
 
+  /**
+   * TODO
+   */
   update(deltaTime: number) {
     if (this.position.y <= 0) {
       this.position.setY(0);
