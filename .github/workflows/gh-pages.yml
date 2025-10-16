@@ -40,7 +40,8 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Install dependencies
-        run: npm ci
+        # FIX should be npm ci, but this issue... https://github.com/npm/cli/issues/4828
+        run: npm i
       - name: Build with Webpack
         run: npm run build
       - name: Upload artifact
