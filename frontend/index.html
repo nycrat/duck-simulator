@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- <link rel="icon" type="image/svg+xml" href="/vite.svg" /> -->
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="src/style.css" type="text/css" media="all" />
+    <title>Duck Simulator !!!</title>
+  </head>
+  <body id="ha">
+    <script type="module" src="/src/main.ts"></script>
+    <div id="timer">Waiting to start..</div>
+    <div id="menu" class="menu">
+      <h1>Duck Simulator</h1>
+      <button id="play">Play</button>
+      <br />
+      <button id="options">Options</button>
+    </div>
+    <div id="options-menu" class="menu">
+      <h2>Options</h2>
+      <!-- <button id="graphics-button">Graphics Quality: <b>Great</b></button> -->
+      <!-- <br /> -->
+      <button id="stats-button">Stats: <b>None</b></button>
+      <br />
+      <!-- <button id="brightness-button">Brightness: <input type="range" name="" id="" value=""></button> -->
+      <br />
+      <button id="back-button">Back</button>
+    </div>
+    <div id="lobby-menu" class="menu">
+      <h2>Lobby</h2>
+      <div id="duck-select">
+        Name: <input type="text" id="name-input" value="Ducky" />
+        <br />
+        Color: <input type="color" id="color-input" value="#f1f566" />
+        <button id="new-duck-button">New Duck</button>
+      </div>
+      <button id="actual-play">Join Game</button>
+      <br />
+      <button id="lobby-back-button">Back</button>
+    </div>
+  </body>
+</html>

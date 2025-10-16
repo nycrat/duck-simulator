@@ -1,1 +1,9 @@
 .DS_Store
+
+frontend/node_modules/
+frontend/dist/
+
+backend/debug/
+backend/target/
+
+.env
