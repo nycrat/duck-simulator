@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 use actix::prelude::*;
 use actix_web_actors::ws;
 
-use crate::{actors, duck::Duck, messages, protos::protos::protos};
+use crate::{actors, duck::Duck, messages, protos};
 use protobuf::Message;
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -110,7 +110,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Player {
                 }
             }
             ws::Message::Binary(bytes) => {
-                let in_message = protos::Duck::parse_from_bytes(&bytes).unwrap();
+                let in_message = protos::duck::Duck::parse_from_bytes(&bytes).unwrap();
                 self.server_address.do_send(messages::Update {
                     id: self.id,
                     duck: Duck {

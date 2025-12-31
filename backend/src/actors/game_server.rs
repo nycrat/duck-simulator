@@ -1,4 +1,4 @@
-use crate::{actors, duck::Duck, messages, protos::protos::protos};
+use crate::{actors, duck::Duck, messages, protos};
 use protobuf::{Message, SpecialFields};
 use std::{
     collections::{HashMap, HashSet},
@@ -45,12 +45,12 @@ impl GameServer {
     }
 
     /// Produces UpdateSync proto for the given lobby
-    fn get_update_sync_proto(&mut self) -> protos::UpdateSync {
-        let mut message = protos::UpdateSync::new();
+    fn get_update_sync_proto(&mut self) -> protos::update::UpdateSync {
+        let mut message = protos::update::UpdateSync::new();
         message.ducks = self
             .ducks
             .iter()
-            .map(|(id, duck)| protos::Duck {
+            .map(|(id, duck)| protos::duck::Duck {
                 id: *id,
                 rotation: duck.rotation_radians,
                 x: duck.x,
