@@ -8,10 +8,3 @@ message Duck {
   float z = 5;
   uint32 score = 6;
 }
-
-message UpdateSync {
-  repeated Duck ducks = 1;
-  optional float bread_x = 2;
-  optional float bread_y = 3;
-  optional float bread_z = 4;
-}

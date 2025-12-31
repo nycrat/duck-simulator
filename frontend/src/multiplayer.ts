@@ -1,9 +1,10 @@
 import Game from "./game";
 import Duck from "./objects/duck";
-import Protos from "../protos_pb";
+import { UpdateSyncSchema } from "./gen/update_pb";
 import Bread from "./objects/bread";
 import { GameMode } from "./options";
 import { binaryUpdateMessage, joinGameMessage } from "./messages";
+import { fromBinary } from "@bufbuild/protobuf";
 
 /**
  * Connects to backend and adds event listeners to handle incoming messages
@@ -145,25 +146,24 @@ async function handleBinaryMessage(message: MessageEvent, game: Game) {
   if (typeof message.data === "string") {
     return;
   }
-  const data = Protos.UpdateSync.deserializeBinary(
+  const data = fromBinary(
+    UpdateSyncSchema,
     new Uint8Array(await message.data.arrayBuffer()),
   );
 
-  if (data.getBreadX() && data.getBreadY() && data.getBreadZ()) {
-    game.breadList.push(
-      new Bread(data.getBreadX(), data.getBreadY(), data.getBreadZ()),
-    );
+  if (data.breadX && data.breadY && data.breadZ) {
+    game.breadList.push(new Bread(data.breadX, data.breadY, data.breadZ));
     game.scene.add(game.breadList[game.breadList.length - 1]);
   }
 
-  const ducks = data.getDucksList();
+  const ducks = data.ducks;
   for (let i = 0; i < ducks.length; i++) {
-    const id = ducks[i].getId().toString();
-    const x = ducks[i].getX();
-    const y = ducks[i].getY();
-    const z = ducks[i].getZ();
-    const rotation = ducks[i].getRotation();
-    const score = ducks[i].getScore();
+    const id = ducks[i].id.toString();
+    const x = ducks[i].x;
+    const y = ducks[i].y;
+    const z = ducks[i].z;
+    const rotation = ducks[i].rotation;
+    const score = ducks[i].score;
 
     if (
       id === game.ducks[0].duckId &&
