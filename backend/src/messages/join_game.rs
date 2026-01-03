@@ -35,16 +35,17 @@ impl GameServer {
                 variety: message.variety.clone(),
                 color: message.color.clone(),
             });
-            let duck = self.ducks.get(player_id).unwrap();
 
-            // notify new duck of existing ducks
-            if self.ducks.contains_key(player_id) {
-                message.player_address.do_send(CastJoinGame {
-                    id: *player_id,
-                    name: duck.name.clone().unwrap_or_default(),
-                    variety: duck.variety.clone().unwrap_or_default(),
-                    color: duck.color.clone().unwrap_or_default(),
-                });
+            if let Some(duck) = self.ducks.get(player_id) {
+                // notify new duck of existing ducks
+                if self.ducks.contains_key(player_id) {
+                    message.player_address.do_send(CastJoinGame {
+                        id: *player_id,
+                        name: duck.name.clone().unwrap_or_default(),
+                        variety: duck.variety.clone().unwrap_or_default(),
+                        color: duck.color.clone().unwrap_or_default(),
+                    });
+                }
             }
         });
 
