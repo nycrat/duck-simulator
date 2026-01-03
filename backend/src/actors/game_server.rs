@@ -207,7 +207,7 @@ impl GameServer {
             self.player_actors.iter().for_each(|(_, player)| {
                 player.do_send(messages::CastEndGame {});
             });
-            self.start_time = None;
+            *self = GameServer::new();
         }
     }
 }
