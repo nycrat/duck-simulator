@@ -2,6 +2,8 @@
 
 ![duck simulator](/docs/assets/menu.png)
 
+https://github.com/user-attachments/assets/19cc0436-e54a-4955-bdbb-998be684f3b6
+
 ## messages
 
 client sends:
