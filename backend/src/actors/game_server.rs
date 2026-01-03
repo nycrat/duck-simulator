@@ -22,7 +22,7 @@ use rand::{rngs::ThreadRng, Rng};
 pub struct GameServer {
     pub player_actors: HashMap<u32, Addr<actors::player::Player>>,
     pub ducks: HashMap<u32, Duck>,
-    pub _spectator_ids: HashSet<u32>,
+    pub spectator_ids: HashSet<u32>,
     pub bread_list: Vec<(f32, f32, f32)>,
     pub start_time: Option<std::time::SystemTime>,
     pub current_time: std::time::SystemTime,
@@ -36,7 +36,7 @@ impl GameServer {
             player_actors: HashMap::new(),
             rng: rand::thread_rng(),
             ducks: HashMap::new(),
-            _spectator_ids: HashSet::new(),
+            spectator_ids: HashSet::new(),
             bread_list: Vec::new(),
             start_time: None,
             current_time: SystemTime::now(),
@@ -207,7 +207,7 @@ impl GameServer {
             self.player_actors.iter().for_each(|(_, player)| {
                 player.do_send(messages::CastEndGame {});
             });
-            self.start_time = None;
+            *self = GameServer::new();
         }
     }
 }
