@@ -38,8 +38,8 @@ impl Handler<StartGame> for GameServer {
 #[derive(Message)]
 #[rtype("()")]
 pub struct CastStartGame {
-    start_time: std::time::SystemTime,
-    game_duration: std::time::Duration,
+    pub start_time: std::time::SystemTime,
+    pub game_duration: std::time::Duration,
 }
 
 impl Handler<CastStartGame> for Player {

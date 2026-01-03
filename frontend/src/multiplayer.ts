@@ -77,10 +77,22 @@ function handleStringMessage(message: MessageEvent, game: Game) {
       game.ducks[0].duckId = id;
       break;
 
+    case "re:spectate_game":
+      game.startTime = parseInt(data[1]);
+      game.gameDuration = parseInt(data[2]);
+
+      game.gameMode = GameMode.SPECTATOR;
+      game.ducks[0].visible = false;
+
+      document.getElementById("timer")!.innerText = "02:00";
+      break;
+
     case "cast:start_game":
       game.startTime = parseInt(data[1]);
       game.gameDuration = parseInt(data[2]);
-      game.gameMode = GameMode.ONLINE;
+      if (game.gameMode !== GameMode.SPECTATOR) {
+        game.gameMode = GameMode.ONLINE;
+      }
 
       document.getElementById("timer")!.innerText = "02:00";
       break;
@@ -106,16 +118,6 @@ function handleStringMessage(message: MessageEvent, game: Game) {
       game.ducks[game.ducks.length - 1].duckId = data[1];
       game.ducks[game.ducks.length - 1].nameText.visible = true;
       game.scene.add(game.ducks[game.ducks.length - 1]);
-      break;
-
-    case "cast:spectate_game":
-      game.startTime = parseInt(data[1]);
-      game.gameDuration = parseInt(data[2]);
-
-      game.gameMode = GameMode.SPECTATOR;
-      game.ducks[0].visible = false;
-
-      document.getElementById("timer")!.innerText = "02:00";
       break;
 
     case "cast:leave_game":

@@ -14,9 +14,10 @@ impl Handler<LeaveGame> for GameServer {
 
     fn handle(&mut self, message: LeaveGame, _: &mut Context<Self>) {
         log::info!("duck disconnected");
-        if self.player_actors.remove(&message.id).is_some()
-            || self.ducks.remove(&message.id).is_some()
-        {
+        self.player_actors.remove(&message.id);
+        self.spectator_ids.remove(&message.id);
+
+        if self.ducks.remove(&message.id).is_some() {
             self.player_actors.iter().for_each(|(_, actor)| {
                 actor.do_send(CastLeaveGame { id: message.id });
             });
