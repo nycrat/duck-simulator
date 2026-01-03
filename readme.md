@@ -1,6 +1,6 @@
 # duck simulator
 
-![duck simulator](/menu.png)
+![duck simulator](/docs/assets/menu.png)
 
 ## messages
 
