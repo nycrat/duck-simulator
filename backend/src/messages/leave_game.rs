@@ -16,6 +16,7 @@ impl Handler<LeaveGame> for GameServer {
         log::info!("duck disconnected");
         self.player_actors.remove(&message.id);
         self.spectator_ids.remove(&message.id);
+        self.votes.remove(&message.id);
 
         if self.ducks.remove(&message.id).is_some() {
             self.player_actors.iter().for_each(|(_, actor)| {

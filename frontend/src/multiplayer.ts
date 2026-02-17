@@ -169,6 +169,7 @@ function handleStringMessage(message: MessageEvent, game: Game, ws: WebSocket) {
 
     case "cast:leave_game":
       const leaveId = data[1];
+      votedIds.delete(leaveId);
 
       const leaveIndex = game.ducks.findIndex(
         (duck) => duck.duckId === leaveId,
