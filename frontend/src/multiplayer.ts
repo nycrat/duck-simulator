@@ -11,6 +11,7 @@ import {
 import { fromBinary } from "@bufbuild/protobuf";
 
 let socket: WebSocket | null = null;
+const votedIds = new Set<string>();
 
 /**
  * Connects to backend and adds event listeners to handle incoming messages
@@ -52,12 +53,16 @@ export default function serverConnect(game: Game) {
  */
 function updatePlayerList(game: Game) {
   const listEl = document.getElementById("player-list");
+  const readyCountEl = document.getElementById("ready-count");
   if (!listEl) return;
+
+  readyCountEl!.textContent = `${votedIds.size}/${game.ducks.length} Ready`;
 
   listEl.innerHTML = "";
   for (const duck of game.ducks) {
     const li = document.createElement("li");
-    li.textContent = duck.duckName;
+    const ready = votedIds.has(duck.duckId) ? " (ready)" : "";
+    li.textContent = duck.duckName + ready;
     li.style.color = duck.color;
     listEl.appendChild(li);
   }
@@ -163,18 +168,23 @@ function handleStringMessage(message: MessageEvent, game: Game, ws: WebSocket) {
       break;
 
     case "cast:leave_game":
-      const leave_id = data[1];
+      const leaveId = data[1];
 
-      const leave_index = game.ducks.findIndex(
-        (duck) => duck.duckId === leave_id,
+      const leaveIndex = game.ducks.findIndex(
+        (duck) => duck.duckId === leaveId,
       );
 
-      if (leave_index === -1) {
+      if (leaveIndex === -1) {
         break;
       }
 
-      game.scene.remove(game.ducks[leave_index]);
-      game.ducks.splice(leave_index, 1);
+      game.scene.remove(game.ducks[leaveIndex]);
+      game.ducks.splice(leaveIndex, 1);
+      updatePlayerList(game);
+      break;
+
+    case "cast:vote_start_game":
+      votedIds.add(data[1]);
       updatePlayerList(game);
       break;
 
