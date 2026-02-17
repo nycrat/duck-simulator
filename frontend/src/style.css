@@ -57,6 +57,11 @@ h2 {
   font-weight: bold;
 }
 
+h3 {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
 #options-menu {
   display: none;
 }
@@ -64,8 +69,6 @@ h2 {
 #lobby-menu {
   display: none;
 }
-
-#menu #play {}
 
 #timer {
   display: none;
@@ -75,4 +78,31 @@ h2 {
   transform: translateX(-50%);
   color: white;
   text-shadow: 0 0 5px #000;
+}
+
+#waiting-lobby {
+  display: none;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: white;
+  background: #000a;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+#player-list {
+  list-style: none;
+  margin: 10px 0;
+}
+
+#vote-start-button {
+  width: 100%;
+  text-align: center;
+  font-size: 1em;
+  padding: 8px;
+  background: #fff3;
+  border-radius: 5px;
+  box-sizing: border-box;
 }

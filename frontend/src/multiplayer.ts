@@ -3,15 +3,19 @@ import Duck from "./objects/duck";
 import { UpdateSyncSchema } from "./gen/update_pb";
 import Bread from "./objects/bread";
 import { GameMode } from "./options";
-import { binaryUpdateMessage, joinGameMessage } from "./messages";
+import {
+  binaryUpdateMessage,
+  joinGameMessage,
+  voteStartGameMessage,
+} from "./messages";
 import { fromBinary } from "@bufbuild/protobuf";
+
+let socket: WebSocket | null = null;
 
 /**
  * Connects to backend and adds event listeners to handle incoming messages
  */
 export default function serverConnect(game: Game) {
-  var socket: WebSocket | null = null;
-
   const protocol = location.protocol.startsWith("https") ? "wss" : "ws";
   const wsUri =
     import.meta.env.VITE_SERVER_URL ??
@@ -44,10 +48,40 @@ export default function serverConnect(game: Game) {
 }
 
 /**
+ * Updates the player list UI from game.ducks array
+ */
+function updatePlayerList(game: Game) {
+  const listEl = document.getElementById("player-list");
+  if (!listEl) return;
+
+  listEl.innerHTML = "";
+  for (const duck of game.ducks) {
+    const li = document.createElement("li");
+    li.textContent = duck.duckName;
+    li.style.color = duck.color;
+    listEl.appendChild(li);
+  }
+}
+
+/**
+ * Sets up the vote start button click handler
+ */
+function setupVoteButton() {
+  const button = document.getElementById("vote-start-button");
+  if (!button || !socket) return;
+
+  button.onclick = () => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(voteStartGameMessage());
+    }
+  };
+}
+
+/**
  * Event handler for websocket connecting
  */
-function handleOpen(socket: WebSocket | null, game: Game) {
-  if (!socket) {
+function handleOpen(ws: WebSocket | null, game: Game) {
+  if (!ws) {
     return;
   }
 
@@ -55,17 +89,17 @@ function handleOpen(socket: WebSocket | null, game: Game) {
   document.getElementById("timer")!.style.display = "unset";
   game.ducks[0].nameText.visible = true;
 
-  socket.send(joinGameMessage(game.ducks[0]));
+  document.getElementById("waiting-lobby")!.style.display = "block";
+  updatePlayerList(game);
+  setupVoteButton();
+
+  ws.send(joinGameMessage(game.ducks[0]));
 }
 
 /**
  * Event handler for receiving string messages
  */
-function handleStringMessage(
-  message: MessageEvent,
-  game: Game,
-  socket: WebSocket,
-) {
+function handleStringMessage(message: MessageEvent, game: Game, ws: WebSocket) {
   if (typeof message.data !== "string") {
     return;
   }
@@ -77,8 +111,9 @@ function handleStringMessage(
     case "re:join_game":
       const id = data[1];
       game.ducks[0].duckId = id;
+      updatePlayerList(game);
       setInterval(() => {
-        socket.send(binaryUpdateMessage(game.ducks[0]));
+        ws.send(binaryUpdateMessage(game.ducks[0]));
       }, 10);
       break;
 
@@ -99,6 +134,7 @@ function handleStringMessage(
         game.gameMode = GameMode.ONLINE;
       }
 
+      document.getElementById("waiting-lobby")!.style.display = "none";
       document.getElementById("timer")!.innerText = "02:00";
       break;
 
@@ -123,6 +159,7 @@ function handleStringMessage(
       game.ducks[game.ducks.length - 1].duckId = data[1];
       game.ducks[game.ducks.length - 1].nameText.visible = true;
       game.scene.add(game.ducks[game.ducks.length - 1]);
+      updatePlayerList(game);
       break;
 
     case "cast:leave_game":
@@ -138,6 +175,7 @@ function handleStringMessage(
 
       game.scene.remove(game.ducks[leave_index]);
       game.ducks.splice(leave_index, 1);
+      updatePlayerList(game);
       break;
 
     default:
