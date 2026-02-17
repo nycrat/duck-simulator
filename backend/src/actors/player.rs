@@ -103,8 +103,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Player {
                         log::info!("joined: {v:?}");
                     }
                     "vote_start_game" => {
-                        // TODO implement vote start system instead
-                        self.server_address.do_send(messages::StartGame {});
+                        self.server_address
+                            .do_send(messages::VoteStartGame { id: self.id });
                     }
                     _ => {}
                 }

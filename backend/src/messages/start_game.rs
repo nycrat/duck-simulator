@@ -1,38 +1,6 @@
 use actix::prelude::*;
 
-use crate::actors::{GameServer, Player};
-
-/// A message to `GameServer` actor to start the game
-///
-/// TODO replace this message with vote start
-#[derive(Message)]
-#[rtype("()")]
-pub struct StartGame {}
-
-impl Handler<StartGame> for GameServer {
-    type Result = ();
-
-    fn handle(&mut self, _: StartGame, _: &mut Self::Context) -> Self::Result {
-        if self.start_time.is_none() {
-            log::info!(
-                "STARTED GAME WITH {} DUCKS WITH DURATION {}",
-                self.ducks.len(),
-                self.game_duration.as_secs()
-            );
-            let start_time = std::time::SystemTime::now();
-            let game_duration = self.game_duration;
-
-            self.player_actors.iter().for_each(|(_, player)| {
-                player.do_send(CastStartGame {
-                    start_time,
-                    game_duration,
-                })
-            });
-
-            self.start_time = Some(start_time);
-        }
-    }
-}
+use crate::actors::Player;
 
 /// A message to `Player` actor to broadcast game starting
 #[derive(Message)]

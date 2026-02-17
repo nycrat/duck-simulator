@@ -28,6 +28,7 @@ pub struct GameServer {
     pub current_time: std::time::SystemTime,
     pub game_duration: Duration,
     pub rng: ThreadRng,
+    pub votes: HashSet<u32>,
 }
 
 impl GameServer {
@@ -41,6 +42,7 @@ impl GameServer {
             start_time: None,
             current_time: SystemTime::now(),
             game_duration: Duration::from_secs(30),
+            votes: HashSet::new(),
         }
     }
 
