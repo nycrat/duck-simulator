@@ -13,7 +13,9 @@ export default function serverConnect(game: Game) {
   var socket: WebSocket | null = null;
 
   const protocol = location.protocol.startsWith("https") ? "wss" : "ws";
-  const wsUri = `${protocol}://${location.hostname}:4421/ws`;
+  const wsUri =
+    import.meta.env.VITE_SERVER_URL ??
+    `${protocol}://${location.hostname}:4421/ws`;
 
   socket = new WebSocket(wsUri);
 
