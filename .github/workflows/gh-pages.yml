@@ -43,7 +43,7 @@ jobs:
         # FIX should be npm ci, but this issue... https://github.com/npm/cli/issues/4828
         run: npm i
       - name: Build with Webpack
-        run: npm run build
+        run: VITE_SERVER_URL="${{ env.VITE_SERVER_URL }}" npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
