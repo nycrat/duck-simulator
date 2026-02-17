@@ -21,9 +21,11 @@ export default function serverConnect(game: Game) {
 
   socket.addEventListener("open", (_event) => handleOpen(socket, game));
 
-  socket.addEventListener("message", (message: MessageEvent<string>) =>
-    handleStringMessage(message, game),
-  );
+  socket.addEventListener("message", (message: MessageEvent<string>) => {
+    if (socket) {
+      handleStringMessage(message, game, socket);
+    }
+  });
   socket.addEventListener("message", async (message: MessageEvent<Blob>) =>
     handleBinaryMessage(message, game),
   );
@@ -54,18 +56,16 @@ function handleOpen(socket: WebSocket | null, game: Game) {
   game.ducks[0].nameText.visible = true;
 
   socket.send(joinGameMessage(game.ducks[0]));
-
-  setInterval(() => {
-    if (socket) {
-      socket.send(binaryUpdateMessage(game.ducks[0]));
-    }
-  }, 10);
 }
 
 /**
  * Event handler for receiving string messages
  */
-function handleStringMessage(message: MessageEvent, game: Game) {
+function handleStringMessage(
+  message: MessageEvent,
+  game: Game,
+  socket: WebSocket,
+) {
   if (typeof message.data !== "string") {
     return;
   }
@@ -77,6 +77,9 @@ function handleStringMessage(message: MessageEvent, game: Game) {
     case "re:join_game":
       const id = data[1];
       game.ducks[0].duckId = id;
+      setInterval(() => {
+        socket.send(binaryUpdateMessage(game.ducks[0]));
+      }, 10);
       break;
 
     case "re:spectate_game":
