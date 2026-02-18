@@ -106,3 +106,12 @@ h3 {
   border-radius: 5px;
   box-sizing: border-box;
 }
+
+@media (max-width: 768px) {
+  #waiting-lobby {
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 85%;
+  }
+}
