@@ -4,7 +4,7 @@ use rand::Rng;
 use crate::{
     actors::{GameServer, Player},
     duck::Duck,
-    messages::start_game::CastStartGame,
+    messages::CastStartGame,
 };
 
 /// A message to `GameServer` actor that new player has joined

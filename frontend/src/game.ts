@@ -91,6 +91,9 @@ export default class Game {
     window.addEventListener(
       "touchstart",
       (event) => {
+        const target = event.target as HTMLElement;
+        if (target.closest("#waiting-lobby")) return;
+
         event.preventDefault();
         handleTouch(event.touches[event.touches.length - 1]);
       },
