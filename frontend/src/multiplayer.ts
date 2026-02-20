@@ -223,24 +223,21 @@ async function handleBinaryMessage(message: MessageEvent, game: Game) {
 
     if (
       id === game.ducks[0].duckId &&
-      game.gameMode !== GameMode.LEADERBOARDS &&
-      (new Date().getTime() / 1000 - game.startTime < game.gameDuration - 2 ||
-        game.startTime === 0)
+      game.gameMode !== GameMode.LEADERBOARDS
     ) {
       game.ducks[0].score = score;
       continue;
     }
 
-    for (const duck of game.ducks) {
-      if (id === duck.duckId) {
-        duck.position.x = x;
-        duck.position.y = y;
-        duck.position.z = z;
-        duck.rotation.y = rotation;
-        duck.direction = rotation;
-        duck.score = score;
-        break;
-      }
+    const duck = game.ducks.find((duck) => duck.duckId === id);
+
+    if (duck) {
+      duck.position.x = x;
+      duck.position.y = y;
+      duck.position.z = z;
+      duck.rotation.y = rotation;
+      duck.direction = rotation;
+      duck.score = score;
     }
   }
 }
